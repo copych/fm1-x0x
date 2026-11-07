@@ -315,6 +315,16 @@ keeping rhythm, accents, slides, ties and notes on beat positions. Some gestures
 leave the phrase unchanged. HOME + REC undoes the action. This does not capture a favorite;
 it is a first prototype of controlled phrase development.
 
+**Experimental LIKE / RETURN:** on TB-3PO, ENV + OCT+ captures that 303's complete
+phrase (including length, rate, direction, transpose and generator settings).
+LFO + OCT- restores it to the selected pattern. Sound knobs and automation are not
+captured or restored. Each 303 has one independent capture; LIKE replaces it.
+Captures survive pattern selection, generation, Develop and undo, but are runtime-only:
+loading/restoring a project or rebooting clears them. RETURN is immediate between
+audio blocks; it does not restart transport or quantize to a phrase boundary.
+Automatic mutation still follows the restored generator settings. NO LIKED PHRASE
+means nothing was changed. These controls are provisional.
+
 TB-3PO has two pages (press ARP again, or turn SELECT):
 
 - GENERATE: DENS, ACCENT and SLIDE set how many steps play, are accented and slide. OCTS sets

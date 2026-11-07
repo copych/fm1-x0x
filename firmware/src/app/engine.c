@@ -9,6 +9,7 @@
 #include "../dsp/fxbus.h"
 #include "../dsp/master.h"
 #include "../dsp/fastmath.h"
+#include "../seq/motif.h"
 
 #define POOL X0X_POOL
 
@@ -20,6 +21,54 @@ volatile uint32_t eng_prof[ENG_PROF_N], eng_prof_frames;
 
 /* ---------------------------------------------------------------- state --- */
 seq_t seq;
+static motif_bank_t motifs X0X_POOL;
+static volatile uint32_t motif_request X0X_POOL;
+static volatile int motif_result X0X_POOL;
+
+void engine_motif_clear(void)
+{
+    motif_request = 0xFFFFFFFFu;
+    __asm__ volatile("" ::: "memory");
+    motif_result = 0;
+}
+int engine_motif_request(enum eMotifAction action, int bass, int pattern)
+{
+    if ((unsigned)action >= MOTIF_ACTIONS_COUNT || (unsigned)bass >= NBASS ||
+        (unsigned)pattern >= NPAT || motif_request || motif_result)
+        return 0;
+    __asm__ volatile("" ::: "memory");
+    motif_request = 1u + (uint32_t)action + ((uint32_t)bass << 8) + ((uint32_t)pattern << 16);
+    return 1;
+}
+int engine_motif_result(void)
+{
+    int result = motif_result;
+    if (result) {
+        __asm__ volatile("" ::: "memory");
+        motif_result = 0;
+    }
+    return result;
+}
+static void motif_service(void) /* render context: coherent with automatic mutation */
+{
+    uint32_t request = motif_request;
+    if (request == 0xFFFFFFFFu) {
+        int b;
+        for (b = 0; b < NBASS; ++b) motifs.valid[b] = 0;
+        motif_request = 0;
+        return;
+    }
+    if (request) {
+        int action = (int)(request & 255u) - 1, b = (int)((request >> 8) & 255u);
+        bpart_t *p = &seq.pat[request >> 16].bass[b];
+        int result = action + 1;
+        if (action == MOTIF_LIKE) motif_like(&motifs, b, p);
+        else if (!motif_return(&motifs, b, p)) result = -1;
+        __asm__ volatile("" ::: "memory");
+        motif_request = 0;
+        motif_result = result;
+    }
+}
 volatile uint8_t eng_step[NTRACKS];
 volatile uint16_t eng_peak[NPARTS];
 volatile uint8_t eng_hit[NKIT][NDRUM];
@@ -989,6 +1038,7 @@ void engine_render(int32_t *out_lr, uint32_t n)
     if (n > 256u)
         n = 256u;
     eng_prof_frames += n;
+    motif_service();
     cc_lanes_sent = 0;
     if ((mot_was_on && !mot_on) || mot_release_req) {   /* motion off, or its lanes replaced: knobs back */
         mot_release_req = 0;

@@ -1,0 +1,75 @@
+wait 300
+turn ALGO 2
+tap ARP
+listen
+# Empty return must do nothing.
+snapline 0
+press LFO
+tap OCT-
+release LFO
+said NO LIKED PHRASE
+expect linechg0 0
+tap OCT+
+snapline 0
+press ENV
+tap OCT+
+release ENV
+said LIKED
+wait 500
+tap PLAY
+press ENV
+tap OCT-
+release ENV
+said DEVELOPED
+# Unrelated sound changes must survive RETURN.
+tap EDIT
+turn K1 15
+param 2 0 0 77
+tap ARP
+press LFO
+tap OCT-
+release LFO
+said RETURNED
+expect playing 1
+expect linechg0 0
+expect sound2.0.0 77
+# B has its own empty capture, even though A has liked material.
+turn ALGO 1
+press LFO
+tap OCT-
+release LFO
+said NO LIKED PHRASE
+tap OCT+
+snapline 1
+press ENV
+tap OCT+
+release ENV
+said LIKED
+tap OCT+
+expect linechg1 1
+press LFO
+tap OCT-
+release LFO
+said RETURNED
+expect linechg1 0
+turn ALGO -1
+# A can return after new generation and pattern selection, without consuming capture.
+tap OCT+
+expect linechg0 1
+turn PRESET 1
+press LFO
+tap OCT-
+release LFO
+said RETURNED
+wait 2200
+expect playing 1
+# Reboot clears runtime captures.
+tap PLAY
+reboot
+turn ALGO 2
+tap ARP
+listen
+press LFO
+tap OCT-
+release LFO
+said NO LIKED PHRASE

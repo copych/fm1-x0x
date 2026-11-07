@@ -2421,6 +2421,14 @@ static void button_tap(int b)
             held_note_by(up ? 12 : -12);
         } else if (ui.view == V_GEN) {
             bpart_t *bp = &cur_pat()->bass[bidx()];
+            int like = up && (ui.btn & (1u << B_ENV));
+            int recall = !up && (ui.btn & (1u << B_LFO));
+            if (like || recall) {
+                ui.btn_used |= 1u << (like ? B_ENV : B_LFO);
+                if (!engine_motif_request(like ? MOTIF_LIKE : MOTIF_RETURN, bidx(), seq.ppat[ui.part]))
+                    warn("MOTIF BUSY", 0);
+                break;
+            }
             if (up) {
                 char t[20];
                 bp->gen.seed = tb3po_new_seed(plat_ms() ^ (ui.frame << 7));
@@ -4639,6 +4647,7 @@ static void speak_dump(void)
 void ui_init(void)
 {
     int i;
+    engine_motif_clear();
     for (i = 0; i < NKEYS; i++) {
         if (KEY_WHITE[i] >= 0)
             WHITE_KEY[KEY_WHITE[i]] = (uint8_t)i;
@@ -4699,6 +4708,13 @@ static void autosave(void)
 void ui_frame(void)
 {
     uint32_t i;
+    int motif_done = engine_motif_result();
+    if (motif_done < 0) warn("NO LIKED PHRASE", 0);
+    else if (motif_done == MOTIF_LIKE + 1) say("LIKED", 0);
+    else if (motif_done == MOTIF_RETURN + 1) {
+        mark_dirty();
+        say("RETURNED", 0);
+    }
     input();
     undo_tick();
     autosave();
