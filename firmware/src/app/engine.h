@@ -37,12 +37,15 @@ typedef struct {
 } sound_t;
 
 extern seq_t seq;                      /* the sequencer (its pattern pointer is the project's) */
-enum eMotifAction { MOTIF_LIKE, MOTIF_RETURN, MOTIF_ACTIONS_COUNT };
+enum eMotifAction { MOTIF_LIKE, MOTIF_RETURN, MOTIF_GENERATE, MOTIF_ACTIONS_COUNT };
 /* Main -> render mailbox: one outstanding operation; 0 busy/invalid, 1 accepted.
  * Completion: 0 pending/none, action+1 success, -1 no capture. Poll on main. */
 int engine_motif_request(enum eMotifAction action, int bass, int pattern);
 int engine_motif_result(void);
 void engine_motif_clear(void); /* main: clear runtime captures at next render block */
+/* Motif targets NBASS + kit address drums. Runtime generator controls only. */
+int engine_drum_generate(int kit, int pattern, int parameter, uint32_t value);
+int engine_drum_value(int kit, int parameter);
 /* render stages (the PERF screen): 909, 808, 303 A, 303 B, BREAK, FX, MASTER, SEQ */
 enum { PR_909, PR_808, PR_303A, PR_303B, PR_BRK, PR_FX, PR_MST, PR_SEQ, ENG_PROF_N };
 extern volatile uint32_t eng_prof[ENG_PROF_N], eng_prof_frames;

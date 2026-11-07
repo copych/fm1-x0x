@@ -1,0 +1,64 @@
+wait 300
+listen
+tap ARP
+turn K2 -50 100
+expect hit0.0.0 0
+turn K2 50 100
+expect hit0.0.0 1
+expect hit0.1.4 1
+expect hit0.7.2 1
+shot drum-generator.png
+press ENV
+tap OCT+
+release ENV
+said LIKED
+tap PLAY
+turn K1 100 100
+turn K2 -50 100
+expect hit0.0.0 0
+press LFO
+tap OCT-
+release LFO
+said RETURNED
+expect hit0.0.0 1
+expect hit0.1.4 1
+expect hit0.7.2 1
+expect playing 1
+tap SEQ
+# Ordinary editing remains available.
+tapkey b0
+tapkey w0
+expect hit0.0.0 0
+tap ARP
+press LFO
+tap OCT-
+release LFO
+said RETURNED
+expect hit0.0.0 1
+turn ALGO 1
+press LFO
+tap OCT-
+release LFO
+said NO LIKED PHRASE
+tap OCT+
+said GROOVE GENERATED
+expect hit1.0.0 1
+expect hit1.10.2 1
+expect hit1.7.2 0
+press ENV
+tap OCT+
+release ENV
+said LIKED
+turn K2 -50 100
+expect hit1.0.0 0
+press LFO
+tap OCT-
+release LFO
+said RETURNED
+expect hit1.0.0 1
+expect playing 1
+tap PLAY
+tap SAVE
+reboot
+expect hit0.0.0 1
+expect hit1.0.0 1

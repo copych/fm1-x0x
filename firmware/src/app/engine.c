@@ -10,6 +10,7 @@
 #include "../dsp/master.h"
 #include "../dsp/fastmath.h"
 #include "../seq/motif.h"
+#include "../seq/drumgen.h"
 
 #define POOL X0X_POOL
 
@@ -24,6 +25,13 @@ seq_t seq;
 static motif_bank_t motifs X0X_POOL;
 static volatile uint32_t motif_request X0X_POOL;
 static volatile int motif_result X0X_POOL;
+static struct {
+    dpart_t phrase[NKIT];
+    drumgen_cfg_t cfg[NKIT], liked_cfg[NKIT];
+    uint8_t valid[NKIT];
+    dpart_t generated;
+    drumgen_cfg_t proposed;
+} drum_memory X0X_POOL;
 
 void engine_motif_clear(void)
 {
@@ -33,11 +41,30 @@ void engine_motif_clear(void)
 }
 int engine_motif_request(enum eMotifAction action, int bass, int pattern)
 {
-    if ((unsigned)action >= MOTIF_ACTIONS_COUNT || (unsigned)bass >= NBASS ||
+    if ((unsigned)action >= MOTIF_GENERATE || (unsigned)bass >= NBASS + NKIT ||
         (unsigned)pattern >= NPAT || motif_request || motif_result)
         return 0;
     __asm__ volatile("" ::: "memory");
     motif_request = 1u + (uint32_t)action + ((uint32_t)bass << 8) + ((uint32_t)pattern << 16);
+    return 1;
+}
+int engine_drum_value(int kit, int parameter)
+{
+    if ((unsigned)kit >= NKIT) return 0;
+    return parameter ? drum_memory.cfg[kit].full : drum_memory.cfg[kit].weird;
+}
+int engine_drum_generate(int kit, int pattern, int parameter, uint32_t value)
+{
+    if ((unsigned)kit >= NKIT || (unsigned)pattern >= NPAT || (unsigned)parameter > 2 ||
+        (parameter < 2 && value > 100) || motif_request || motif_result) return 0;
+    drum_memory.proposed = drum_memory.cfg[kit];
+    if (parameter == 0) drum_memory.proposed.weird = (uint8_t)value;
+    else if (parameter == 1) drum_memory.proposed.full = (uint8_t)value;
+    else drum_memory.proposed.seed = value;
+    /* Main owns staging until request publication. Render only copies completed hits. */
+    drumgen_generate(&drum_memory.generated, kit, &drum_memory.proposed);
+    __asm__ volatile("" ::: "memory");
+    motif_request = MOTIF_GENERATE + 1u + ((uint32_t)(NBASS + kit) << 8) + ((uint32_t)pattern << 16);
     return 1;
 }
 int engine_motif_result(void)
@@ -55,15 +82,46 @@ static void motif_service(void) /* render context: coherent with automatic mutat
     if (request == 0xFFFFFFFFu) {
         int b;
         for (b = 0; b < NBASS; ++b) motifs.valid[b] = 0;
+        for (b = 0; b < NKIT; ++b) {
+            drum_memory.valid[b] = 0;
+            drum_memory.cfg[b].seed = (uint32_t)b + 1u;
+            drum_memory.cfg[b].weird = 0;
+            drum_memory.cfg[b].full = 50;
+        }
         motif_request = 0;
         return;
     }
     if (request) {
         int action = (int)(request & 255u) - 1, b = (int)((request >> 8) & 255u);
-        bpart_t *p = &seq.pat[request >> 16].bass[b];
         int result = action + 1;
-        if (action == MOTIF_LIKE) motif_like(&motifs, b, p);
-        else if (!motif_return(&motifs, b, p)) result = -1;
+        if (b < NBASS) {
+            bpart_t *p = &seq.pat[request >> 16].bass[b];
+            if (action == MOTIF_LIKE) motif_like(&motifs, b, p);
+            else if (!motif_return(&motifs, b, p)) result = -1;
+        } else {
+            int k = b - NBASS, i, j;
+            dpart_t *p = &seq.pat[request >> 16].drum[k];
+            if (action == MOTIF_GENERATE) {
+                for (i = 0; i < NDRUM; ++i)
+                    for (j = 0; j < NSW; ++j) p->hit[i][j] = drum_memory.generated.hit[i][j];
+                for (j = 0; j < NSW; ++j) p->accent[j] = drum_memory.generated.accent[j];
+                p->len = drum_memory.generated.len;
+                p->rate = drum_memory.generated.rate;
+                drum_memory.cfg[k] = drum_memory.proposed;
+            } else if (action == MOTIF_LIKE) {
+                drum_memory.phrase[k] = *p;
+                drum_memory.liked_cfg[k] = drum_memory.cfg[k];
+                drum_memory.valid[k] = 1;
+            } else if (!drum_memory.valid[k]) result = -1;
+            else {
+                for (i = 0; i < NDRUM; ++i)
+                    for (j = 0; j < NSW; ++j) p->hit[i][j] = drum_memory.phrase[k].hit[i][j];
+                for (j = 0; j < NSW; ++j) p->accent[j] = drum_memory.phrase[k].accent[j];
+                p->len = drum_memory.phrase[k].len;
+                p->rate = drum_memory.phrase[k].rate;
+                drum_memory.cfg[k] = drum_memory.liked_cfg[k];
+            }
+        }
         __asm__ volatile("" ::: "memory");
         motif_request = 0;
         motif_result = result;

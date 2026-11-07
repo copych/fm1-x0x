@@ -55,6 +55,7 @@ typedef struct {
     uint32_t hold_t0;                  /* when it went down (a tap takes an old step off) */
     uint16_t brk_pinkeys;              /* BREAK: black keys used to give a held step its slice (their release is not live) */
     uint8_t gen_stale[NBASS];          /* TB-3PO's knobs changed since the line was written */
+    uint8_t drum_notice;              /* explicit NEW only; knob sweeps keep their readout */
     uint32_t btn, keys, btn_used;
     int8_t chain_first;
     uint32_t enc_t[NE];
@@ -182,7 +183,7 @@ static void say(const char *a, const char *b) { say_as(a, b, ANN_NOW); }
 static void warn(const char *a, const char *b) { say_as(a, b, ANN_NOW | ANN_KEEP); }
 
 /* =============================================================== param refs === */
-enum { R_NONE, R_ENG, R_SWING, R_DLEN, R_DRATE, R_BLEN, R_BRATE, R_BDIR, R_BTRANS, R_GEN, R_BRKSET,
+enum { R_NONE, R_ENG, R_SWING, R_DLEN, R_DRATE, R_BLEN, R_BRATE, R_BDIR, R_BTRANS, R_GEN, R_DGEN, R_BRKSET,
        R_BRKSLOT, R_TEMPO, R_ACCENT, R_CLKOUT, R_NOTEOUT, R_PALETTE, R_KEYLED, R_KEYSOUND, R_AUTOSAVE, R_ACT, R_SBAR, R_SPAT,
        R_SLEN, R_STALLS, R_HDR, R_TAPE, R_MIDICH, R_OUTLOUD, R_SREP, R_BATT, R_USBFULL, R_FREEPLAY, R_CORES, R_CCOUT,
        R_MIXCH };   /* R_TAPE: FX's one-knob TAPE (DIGI .. worn tape) */          /* R_HDR: a list's section header (a = its group), never selected */
@@ -207,6 +208,7 @@ static const x0x_param_t GEN_P[NGEN] = {
     {"ROOT", 11, 9, ROOT_N}, {"SCALE", TB3PO_NSCALES - 1, 0, TB3PO_SCALE_NAMES}, {"OCTAVE", 4, 1, 0},
     {"MUTATE", 16, 0, 0},
 };
+static const x0x_param_t DGEN_P[2] = {{"WEIRD", 100, 0, 0}, {"FULL", 100, 50, 0}};
 enum { SQ_SWING, SQ_DLEN, SQ_DRATE, SQ_BLEN, SQ_BRATE, SQ_BDIR, SQ_BTRANS, SQ_TEMPO, SQ_ACCENT, SQ_CLK, SQ_NOTES,
        SQ_THEME, SQ_KEYLED, SQ_KEYSOUND, SQ_AUTOSAVE, NSQ };
 static const char *const KEYSOUND_N[] = {"STOPPED", "ALWAYS"};
@@ -269,6 +271,7 @@ static const x0x_param_t *pref_desc(pref_t r)
     switch (r.kind) {
     case R_ENG: return engine_param(r.a, r.b, r.c);
     case R_GEN: return &GEN_P[r.c % NGEN];
+    case R_DGEN: return &DGEN_P[r.c % 2];
     case R_BRKSET: return breaks_param(r.c);
     case R_SWING: return &SEQ_P[SQ_SWING];
     case R_DLEN: return &SEQ_P[SQ_DLEN];
@@ -324,6 +327,7 @@ static int pref_get(pref_t r)
     case R_ENG: return proj.sound.v[r.a][r.b][r.c];
     case R_SWING: return pat_of(PART_909)->swing;
     case R_DLEN: return pat_of(r.a)->drum[r.a].len - 1;
+    case R_DGEN: return engine_drum_value(r.a, r.c);
     case R_DRATE: return pat_of(r.a)->drum[r.a].rate;
     case R_BLEN: return pat_of(NKIT + r.a)->bass[r.a].len - 1;
     case R_BRATE: return pat_of(NKIT + r.a)->bass[r.a].rate;
@@ -383,6 +387,9 @@ static void pref_set(pref_t r, int v)
     v = v < 0 ? 0 : v > d->max ? d->max : v;
     mark_dirty();
     switch (r.kind) {
+    case R_DGEN:
+        if (!engine_drum_generate(r.a, seq.ppat[r.a], r.c, (uint32_t)v)) warn("MOTIF BUSY", 0);
+        break;
     case R_ENG:
         proj.sound.v[r.a][r.b][r.c] = (uint8_t)v;
         engine_set(r.a, r.b, r.c, v);
@@ -679,6 +686,7 @@ static void pref_value_of(pref_t r, int v, char *num, char *unit)
         }
         return;
     case R_BRKSET: put_i(num, v); put_s(unit, "%"); return;
+    case R_DGEN: put_i(num, v); put_s(unit, "%"); return;
     case R_TEMPO: put_i(num, v + 20); put_s(unit, "bpm"); return;
     case R_SBAR: put_i(num, v + 1); return;
     case R_SPAT: num[0] = 'P'; put_i(num + 1, v + 1); return;
@@ -853,6 +861,10 @@ static void build_pages(void)
         break;
     case V_GEN:
         pg_grp = GR_PAT;
+        if (is_drum()) {
+            add_page("GROOVE", PR(R_DGEN, ui.part, 0, 0), PR(R_DGEN, ui.part, 0, 1), NONE, NONE);
+            break;
+        }
         add_page("GENERATE", PR(R_GEN, b, 0, G_DENS), PR(R_GEN, b, 0, G_ACC), PR(R_GEN, b, 0, G_SLIDE),
                  PR(R_GEN, b, 0, G_OCTS));
         add_page("SCALE", PR(R_GEN, b, 0, G_ROOT), PR(R_GEN, b, 0, G_SCALE), PR(R_GEN, b, 0, G_BASE),
@@ -1181,8 +1193,9 @@ static int help_lines(int b, const char *l[HELP_LINES])
         break;
     }
     case B_ARP:
-        L("TB-3PO: THE 303 LINE"); L("GENERATOR (303A, 303B)");
-        if (gen) { L("OCT+: A NEW LINE"); L("OCT-: MUTATE IT"); }
+        if (is_drum()) { L("DRUM GROOVE GENERATOR"); L("K1 STRAIGHT TO WEIRD"); L("K2 HOLLOW TO FULL"); L("OCT+: NEW GROOVE"); }
+        else { L("TB-3PO: THE 303 LINE"); L("GENERATOR (303A, 303B)"); }
+        if (gen && !is_drum()) { L("OCT+: A NEW LINE"); L("OCT-: MUTATE IT"); }
         L("AGAIN: THE NEXT PAGE");
         break;
     case B_SEQ:
@@ -1196,7 +1209,8 @@ static int help_lines(int b, const char *l[HELP_LINES])
         break;
     case B_OCTDN:
     case B_OCTUP:
-        if (gen) L(b == B_OCTUP ? "A NEW 303 LINE" : "MUTATE THE LINE");
+        if (gen) { L(is_drum() ? "NEW DRUM GROOVE" : b == B_OCTUP ? "A NEW 303 LINE" : "MUTATE THE LINE");
+            L("ENV + OCT+: LIKE"); L("LFO + OCT-: RETURN"); }
         else if (kbd) { L("THE KEYBOARD'S OCTAVE"); L("LFO + OCT: A TIE  ENV + OCT: A REST"); }
         else if (ui.view == V_HOME || ui.view == V_SONG) L(b == B_OCTUP ? "PATTERNS 17-32" : "PATTERNS 1-16");
         else {
@@ -2373,7 +2387,7 @@ static void button_tap(int b)
             set_view(V_PART);
         break;
     case B_ARP:
-        if (!is_303()) {
+        if (!is_303() && !is_drum()) {
             warn("TB-3PO: PICK 303A OR 303B", 0);
             break;
         }
@@ -2420,13 +2434,20 @@ static void button_tap(int b)
         } else if (steps_view() && is_303() && !ui.rec && ui.held_step >= 0) {   /* a held step: its octave */
             held_note_by(up ? 12 : -12);
         } else if (ui.view == V_GEN) {
-            bpart_t *bp = &cur_pat()->bass[bidx()];
+            bpart_t *bp = is_303() ? &cur_pat()->bass[bidx()] : 0;
             int like = up && (ui.btn & (1u << B_ENV));
             int recall = !up && (ui.btn & (1u << B_LFO));
             if (like || recall) {
                 ui.btn_used |= 1u << (like ? B_ENV : B_LFO);
-                if (!engine_motif_request(like ? MOTIF_LIKE : MOTIF_RETURN, bidx(), seq.ppat[ui.part]))
+                if (!engine_motif_request(like ? MOTIF_LIKE : MOTIF_RETURN,
+                                          is_drum() ? NBASS + ui.part : bidx(), seq.ppat[ui.part]))
                     warn("MOTIF BUSY", 0);
+                break;
+            }
+            if (is_drum()) {
+                uint32_t seed = tb3po_new_seed(plat_ms() ^ (ui.frame << 7));
+                if (!engine_drum_generate(ui.part, seq.ppat[ui.part], 2, seed)) warn("MOTIF BUSY", 0);
+                else ui.drum_notice = 1;
                 break;
             }
             if (up) {
@@ -2587,7 +2608,7 @@ static void input(void)
         } else {
             int p = ui.part + (e > 0 ? 1 : -1);
             ui.part = (uint8_t)(p < 0 ? 0 : p >= NPARTS ? NPARTS - 1 : p);
-            if (ui.view == V_GEN && !is_303())         /* TB-3PO is a 303's */
+            if (ui.view == V_GEN && !is_303() && !is_drum())
                 set_view(V_PART);
             ui.outline_ok = 0;
             build_pages();
@@ -3033,7 +3054,7 @@ static void draw_header(void)
         cv_text(6, vc(&FONT_B, 1, 17), &FONT_B, PART_N[ui.part], C_BLACK);
         x = w + 6;
         if (ui.view == V_GEN)
-            x = cv_text(x, vc(&FONT_S, 1, 17), &FONT_S, "TB-3PO", C_HI) + 6;
+            x = cv_text(x, vc(&FONT_S, 1, 17), &FONT_S, is_drum() ? "GROOVE" : "TB-3PO", C_HI) + 6;
         else if (ui.view == V_SEQ)
             x = cv_text(x, vc(&FONT_S, 1, 17), &FONT_S, !kbd_on() ? "SEQ" : ui.rec ? "SEQ KEYS" : "FREE PLAY",
                         kbd_on() ? C_AMB : C_HI) + 6;
@@ -3872,9 +3893,9 @@ static uint16_t footer_text(const char **a, const char **b, const char **c)
         *a = "AGAIN: NEXT PAGE";
         *b = "SEL: ALL AS A LIST";
     } else if (ui.view == V_GEN) {
-        *a = ui.gen_stale[bidx()] ? "OCT+: NEW LINE *" : "OCT+: NEW LINE";
-        *b = "OCT-: MUTATE";
-        return ui.gen_stale[bidx()] ? C_WHITE : C_AMB;
+        *a = is_drum() ? "OCT+: NEW GROOVE" : ui.gen_stale[bidx()] ? "OCT+: NEW LINE *" : "OCT+: NEW LINE";
+        *b = is_drum() ? "K1 WEIRD K2 FULL" : "OCT-: MUTATE";
+        return is_drum() ? C_AMB : ui.gen_stale[bidx()] ? C_WHITE : C_AMB;
     } else if (is_drum()) {
         *a = "BLACK: TRACK";
         *b = "WHITE: STEP";
@@ -4296,7 +4317,7 @@ static void sp_screen(void)
     if (part_view()) {
         sp_cat(PART_N[ui.part]);
         if (ui.view == V_GEN)
-            sp_cat(" TB-3PO");
+            sp_cat(is_drum() ? " GROOVE" : " TB-3PO");
         else if (ui.view == V_SEQ)
             sp_cat(!kbd_on() ? " SEQ" : ui.rec ? " SEQ KEYS" : " FREE PLAY");
         else if (kbd_on())
@@ -4648,6 +4669,7 @@ void ui_init(void)
 {
     int i;
     engine_motif_clear();
+    ui.drum_notice = 0;
     for (i = 0; i < NKEYS; i++) {
         if (KEY_WHITE[i] >= 0)
             WHITE_KEY[KEY_WHITE[i]] = (uint8_t)i;
@@ -4714,6 +4736,11 @@ void ui_frame(void)
     else if (motif_done == MOTIF_RETURN + 1) {
         mark_dirty();
         say("RETURNED", 0);
+    }
+    else if (motif_done == MOTIF_GENERATE + 1) {
+        mark_dirty();
+        if (ui.drum_notice) say("GROOVE GENERATED", 0);
+        ui.drum_notice = 0;
     }
     input();
     undo_tick();

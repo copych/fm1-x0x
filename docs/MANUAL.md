@@ -325,6 +325,27 @@ audio blocks; it does not restart transport or quantize to a phrase boundary.
 Automatic mutation still follows the restored generator settings. NO LIKED PHRASE
 means nothing was changed. These controls are provisional.
 
+### Experimental drum generator
+
+Select the 909 or 808 and press ARP. There is one GROOVE page: K1 moves from
+STRAIGHT (0) to WEIRD (100); K2 moves from HOLLOW (0) to FULL (100).
+Turning either knob generates editable 16-step kick, snare and closed-hat hits.
+FULL 0 is silent. FULL adds hits; WEIRD moves their placement independently of count.
+The same seed and coordinates reproduce the same generated groove. OCT+ or OCT-
+chooses a fresh seed. ENV + OCT+ likes this kit's complete drum pattern;
+LFO + OCT- returns it along with its generator seed and coordinates. Each kit
+has its own runtime capture, separate from both 303 captures.
+
+SEQ still edits the generated hits normally, and REC still records tapping.
+Moving a generator knob rebuilds the kit's hit rows: manual edits and other
+percussion rows are replaced. LIKE first to keep an editable beat for RETURN.
+The generator sets length 16 and rate 1/16 and clears hidden steps; it does not
+change kit sound, manual mutes, FX sends or automation/probability lanes.
+Generator coordinates/seeds and captures are runtime-only; saved hits persist
+normally. Loading a project/reboot clears captures and resets generator controls.
+Updates apply at audio-block boundaries, without restarting or phrase quantization.
+Overlapping requests can report MOTIF BUSY; rejected knob turns do not apply.
+
 TB-3PO has two pages (press ARP again, or turn SELECT):
 
 - GENERATE: DENS, ACCENT and SLIDE set how many steps play, are accented and slide. OCTS sets
