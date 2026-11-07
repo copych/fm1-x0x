@@ -11,6 +11,7 @@
 #include "../dsp/fastmath.h"
 #include "../seq/motif.h"
 #include "../seq/drumgen.h"
+#include "../seq/director.h"
 
 #define POOL X0X_POOL
 
@@ -25,13 +26,72 @@ seq_t seq;
 static motif_bank_t motifs X0X_POOL;
 static volatile uint32_t motif_request X0X_POOL;
 static volatile int motif_result X0X_POOL;
+static volatile uint32_t director_pending X0X_POOL;
+static volatile uint32_t director_result X0X_POOL;
+
 static struct {
     dpart_t phrase[NKIT];
     drumgen_cfg_t cfg[NKIT], liked_cfg[NKIT];
     uint8_t valid[NKIT];
-    dpart_t generated;
-    drumgen_cfg_t proposed;
+    /* Exclusive commands share staging to preserve the target's 8 KiB reserve. */
+    union {
+        struct { dpart_t generated; drumgen_cfg_t proposed; } drums;
+        director_plan_t director;
+    } stage;
 } drum_memory X0X_POOL;
+#define director_plan (drum_memory.stage.director)
+
+int engine_director_request(int kit)
+{
+    int a = seq.ppat[TRK_BASS0], b = seq.ppat[TRK_BASS0 + 1], d;
+    if ((unsigned)kit >= NKIT || director_pending || director_result || motif_request || motif_result ||
+        seq.song_on || seq.chain_a != seq.chain_b) return 0;
+    /* The existing sequencer uses the 909's loop as its bar clock. */
+    if (seq.pat[seq.ppat[TRK_DRUM]].drum[0].len != 16 ||
+        seq.pat[seq.ppat[TRK_DRUM]].drum[0].rate != RATE_16) return 0;
+    d = seq.ppat[kit];
+    if (!director_prepare(&director_plan, &seq.pat[a].bass[0], &seq.pat[b].bass[1],
+                          &seq.pat[d].drum[kit], kit, &drum_memory.cfg[kit])) return 0;
+    director_plan.pattern[0] = (uint8_t)a; director_plan.pattern[1] = (uint8_t)b;
+    director_plan.pattern[2] = (uint8_t)d;
+    __asm__ volatile("" ::: "memory");
+    director_pending = DIRECTOR_QUEUED;
+    return 1;
+}
+int engine_director_result(void)
+{
+    int r = (int)director_result;
+    if (r) { __asm__ volatile("" ::: "memory"); director_result = 0; }
+    return r;
+}
+void engine_director_cancel(void) { if (director_pending) director_pending = DIRECTOR_CANCEL_REQUESTED; }
+static void director_apply(void) /* render: bounded publication, never generation */
+{
+    int a, b, d, k;
+    if (!director_pending) return;
+    __asm__ volatile("" ::: "memory");
+    a = director_plan.pattern[0]; b = director_plan.pattern[1];
+    d = director_plan.pattern[2]; k = director_plan.kit;
+    if (director_pending == DIRECTOR_CANCEL_REQUESTED || seq.song_on || seq.chain_a != seq.chain_b ||
+        seq.ppat[TRK_BASS0] != a || seq.ppat[TRK_BASS0 + 1] != b || seq.ppat[k] != d ||
+        seq.pat[seq.ppat[TRK_DRUM]].drum[0].len != 16 ||
+        seq.pat[seq.ppat[TRK_DRUM]].drum[0].rate != RATE_16 ||
+        !director_unchanged(&director_plan, &seq.pat[a].bass[0], &seq.pat[b].bass[1], &seq.pat[d].drum[k]))
+        director_result = DIRECTOR_CANCELLED;
+    else {
+        motif_copy(&seq.pat[b].bass[1], &director_plan.response);
+        int v;
+        for (v = 0; v < 3; ++v) {
+            int voice = v == 2 ? (k ? 10 : 7) : v;
+            uint32_t *row = seq.pat[d].drum[k].hit[voice];
+            row[0] = (row[0] & 0xFFFF0000u) | (director_plan.support[v] & 0xFFFFu);
+        }
+        director_result = DIRECTOR_APPLIED;
+    }
+    __asm__ volatile("" ::: "memory");
+    director_pending = DIRECTOR_IDLE;
+}
+
 
 void engine_motif_clear(void)
 {
@@ -42,7 +102,7 @@ void engine_motif_clear(void)
 int engine_motif_request(enum eMotifAction action, int bass, int pattern)
 {
     if ((unsigned)action >= MOTIF_GENERATE || (unsigned)bass >= NBASS + NKIT ||
-        (unsigned)pattern >= NPAT || motif_request || motif_result)
+        (unsigned)pattern >= NPAT || motif_request || motif_result || director_pending)
         return 0;
     __asm__ volatile("" ::: "memory");
     motif_request = 1u + (uint32_t)action + ((uint32_t)bass << 8) + ((uint32_t)pattern << 16);
@@ -56,13 +116,13 @@ int engine_drum_value(int kit, int parameter)
 int engine_drum_generate(int kit, int pattern, int parameter, uint32_t value)
 {
     if ((unsigned)kit >= NKIT || (unsigned)pattern >= NPAT || (unsigned)parameter > 2 ||
-        (parameter < 2 && value > 100) || motif_request || motif_result) return 0;
-    drum_memory.proposed = drum_memory.cfg[kit];
-    if (parameter == 0) drum_memory.proposed.weird = (uint8_t)value;
-    else if (parameter == 1) drum_memory.proposed.full = (uint8_t)value;
-    else drum_memory.proposed.seed = value;
+        (parameter < 2 && value > 100) || motif_request || motif_result || director_pending) return 0;
+    drum_memory.stage.drums.proposed = drum_memory.cfg[kit];
+    if (parameter == 0) drum_memory.stage.drums.proposed.weird = (uint8_t)value;
+    else if (parameter == 1) drum_memory.stage.drums.proposed.full = (uint8_t)value;
+    else drum_memory.stage.drums.proposed.seed = value;
     /* Main owns staging until request publication. Render only copies completed hits. */
-    drumgen_generate(&drum_memory.generated, kit, &drum_memory.proposed);
+    drumgen_generate(&drum_memory.stage.drums.generated, kit, &drum_memory.stage.drums.proposed);
     __asm__ volatile("" ::: "memory");
     motif_request = MOTIF_GENERATE + 1u + ((uint32_t)(NBASS + kit) << 8) + ((uint32_t)pattern << 16);
     return 1;
@@ -81,6 +141,8 @@ static void motif_service(void) /* render context: coherent with automatic mutat
     uint32_t request = motif_request;
     if (request == 0xFFFFFFFFu) {
         int b;
+        director_pending = DIRECTOR_IDLE;
+        director_result = 0;
         for (b = 0; b < NBASS; ++b) motifs.valid[b] = 0;
         for (b = 0; b < NKIT; ++b) {
             drum_memory.valid[b] = 0;
@@ -103,11 +165,11 @@ static void motif_service(void) /* render context: coherent with automatic mutat
             dpart_t *p = &seq.pat[request >> 16].drum[k];
             if (action == MOTIF_GENERATE) {
                 for (i = 0; i < NDRUM; ++i)
-                    for (j = 0; j < NSW; ++j) p->hit[i][j] = drum_memory.generated.hit[i][j];
-                for (j = 0; j < NSW; ++j) p->accent[j] = drum_memory.generated.accent[j];
-                p->len = drum_memory.generated.len;
-                p->rate = drum_memory.generated.rate;
-                drum_memory.cfg[k] = drum_memory.proposed;
+                    for (j = 0; j < NSW; ++j) p->hit[i][j] = drum_memory.stage.drums.generated.hit[i][j];
+                for (j = 0; j < NSW; ++j) p->accent[j] = drum_memory.stage.drums.generated.accent[j];
+                p->len = drum_memory.stage.drums.generated.len;
+                p->rate = drum_memory.stage.drums.generated.rate;
+                drum_memory.cfg[k] = drum_memory.stage.drums.proposed;
             } else if (action == MOTIF_LIKE) {
                 drum_memory.phrase[k] = *p;
                 drum_memory.liked_cfg[k] = drum_memory.cfg[k];
@@ -521,6 +583,8 @@ static void s_midi(void *x, uint8_t st, uint8_t d1, uint8_t d2)
 static void s_step(void *x, int t, int p)
 {
     (void)x;
+    if (t == TRK_DRUM && p == 0 && !(seq.t[TRK_DRUM].bars & 3u))
+        director_apply(); /* before any part's first hit on this phrase boundary */
     eng_step[t] = (uint8_t)p;
     if (mot_on)
         motion_step(&mot, t, seq.ppat[t], p, seq_next_step(&seq, t, p), seq_part_len(&seq, t));
@@ -1097,6 +1161,7 @@ void engine_render(int32_t *out_lr, uint32_t n)
         n = 256u;
     eng_prof_frames += n;
     motif_service();
+    if (!seq.playing || director_pending == DIRECTOR_CANCEL_REQUESTED) director_apply();
     cc_lanes_sent = 0;
     if ((mot_was_on && !mot_on) || mot_release_req) {   /* motion off, or its lanes replaced: knobs back */
         mot_release_req = 0;

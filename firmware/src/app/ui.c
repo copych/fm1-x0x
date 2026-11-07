@@ -2434,6 +2434,13 @@ static void button_tap(int b)
         } else if (steps_view() && is_303() && !ui.rec && ui.held_step >= 0) {   /* a held step: its octave */
             held_note_by(up ? 12 : -12);
         } else if (ui.view == V_GEN) {
+            if ((ui.btn & ((1u << B_ENV) | (1u << B_LFO))) == ((1u << B_ENV) | (1u << B_LFO))) {
+                ui.btn_used |= (1u << B_ENV) | (1u << B_LFO);
+                if (!up) { engine_director_cancel(); say("DIRECTOR CANCEL", 0); }
+                else if (engine_director_request(is_drum() ? ui.part : 0)) say("DIRECTOR QUEUED", 0);
+                else warn("DIRECTOR NOT READY", "16 STEP / NO AUTO");
+                break;
+            }
             bpart_t *bp = is_303() ? &cur_pat()->bass[bidx()] : 0;
             int like = up && (ui.btn & (1u << B_ENV));
             int recall = !up && (ui.btn & (1u << B_LFO));
@@ -4741,6 +4748,11 @@ void ui_frame(void)
         mark_dirty();
         if (ui.drum_notice) say("GROOVE GENERATED", 0);
         ui.drum_notice = 0;
+    }
+    {
+        int directed = engine_director_result();
+        if (directed == DIRECTOR_APPLIED) { mark_dirty(); say("ENSEMBLE READY", 0); }
+        else if (directed == DIRECTOR_CANCELLED) say("DIRECTOR CANCELLED", 0);
     }
     input();
     undo_tick();

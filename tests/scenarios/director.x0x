@@ -1,0 +1,76 @@
+wait 300
+listen
+press HOME
+tapkey b1
+release HOME
+expect vmute 2
+param 2 0 0 77
+turn ALGO 2
+tap ARP
+tap OCT+
+snapline 0
+turn ALGO 1
+tap OCT+
+snapline 1
+press ENV
+tap OCT+
+release ENV
+said LIKED
+press ENV
+press LFO
+tap OCT+
+release LFO
+release ENV
+said ENSEMBLE READY
+expect linechg0 0
+expect linechg1 1
+expect vmute 2
+expect sound2.0.0 77
+# The previous LIKE remains available; Director did not overwrite it.
+press LFO
+tap OCT-
+release LFO
+said RETURNED
+expect linechg1 0
+tap PLAY
+wait 500
+press ENV
+press LFO
+tap OCT+
+release LFO
+release ENV
+said DIRECTOR QUEUED
+expect linechg1 0
+wait 300
+expect linechg1 0
+wait 9000
+said ENSEMBLE READY
+expect linechg0 0
+expect linechg1 1
+expect playing 1
+expect vmute 2
+expect sound2.0.0 77
+# A performer edit while queued cancels the pending plan.
+press ENV
+press LFO
+tap OCT+
+release LFO
+release ENV
+tap OCT+
+snapline 1
+wait 9000
+said DIRECTOR CANCELLED
+expect linechg1 0
+# Explicit cancellation does not wait for the next phrase.
+press ENV
+press LFO
+tap OCT+
+release LFO
+release ENV
+press ENV
+press LFO
+tap OCT-
+release LFO
+release ENV
+said DIRECTOR CANCELLED
+expect playing 1

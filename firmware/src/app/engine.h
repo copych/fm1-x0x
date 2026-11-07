@@ -19,6 +19,7 @@
 #include "../dsp/x0x_param.h"
 #include "../seq/sequencer.h"
 #include "../seq/motion.h"
+#include "../seq/director.h"
 
 enum { T_909, T_808, T_303, T_BRK, T_FX, T_MIX, T_MST, NTARGETS };
 #define T_PROB NTARGETS                /* a lane's pseudo-target: a step's chance, 5..100 % (not in sound_t);
@@ -46,6 +47,11 @@ void engine_motif_clear(void); /* main: clear runtime captures at next render bl
 /* Motif targets NBASS + kit address drums. Runtime generator controls only. */
 int engine_drum_generate(int kit, int pattern, int parameter, uint32_t value);
 int engine_drum_value(int kit, int parameter);
+/* Explicit ensemble action; 1 queued, 0 busy/unsupported. Main-loop only.
+ * Applies stopped or on the next four-bar boundary; never changes A or sound/mix. */
+int engine_director_request(int kit);
+int engine_director_result(void);
+void engine_director_cancel(void);
 /* render stages (the PERF screen): 909, 808, 303 A, 303 B, BREAK, FX, MASTER, SEQ */
 enum { PR_909, PR_808, PR_303A, PR_303B, PR_BRK, PR_FX, PR_MST, PR_SEQ, ENG_PROF_N };
 extern volatile uint32_t eng_prof[ENG_PROF_N], eng_prof_frames;

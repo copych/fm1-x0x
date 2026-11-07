@@ -18,5 +18,8 @@ void tb3po_generate(bpart_t *b);
 void tb3po_mutate(bpart_t *b, uint32_t *rng);
 /* Main-loop action: nearby scale pitches; preserve rhythm, articulation and beat anchors. */
 void tb3po_develop(bpart_t *b, uint32_t *rng);
+/* Director's first relationship: octave response delayed by two 16th notes.
+ * Input must be a 16-step forward phrase. Does not alter the lead. */
+void tb3po_response(bpart_t *response, const bpart_t *lead);
 /* a new seed from any entropy (time, key presses) */
 uint32_t tb3po_new_seed(uint32_t entropy);

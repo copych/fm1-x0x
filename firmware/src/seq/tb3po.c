@@ -170,3 +170,38 @@ uint32_t tb3po_new_seed(uint32_t entropy)
     rng_u32(&r);
     return r ? r : 1;
 }
+
+/* A response generator: the Director chooses the relationship, this engine voices it. */
+void tb3po_response(bpart_t *response, const bpart_t *a)
+{
+    int s, any;
+    *response = *a;
+    if (response->gen.base_oct < 8) response->gen.base_oct++;
+    response->gen.seed ^= 0x9e3779b9u;
+    for (s = 0; s < 16; ++s) {
+        const bstep_t *lead = &a->step[(s + 14) & 15];
+        bstep_t *answer = &response->step[s];
+        *answer = *lead;
+        if (bstep_gate(lead) != G_NOTE) answer->flags = G_REST;
+        else {
+            /* Keep the lead's pitch vocabulary, lifted an octave where possible. */
+            answer->note = (uint8_t)(lead->note <= 115 ? lead->note + 12 : lead->note);
+            /* Both may anchor a beat, but B leaves space on other lead attacks. */
+            if ((s & 3) && bstep_gate(&a->step[s]) == G_NOTE) answer->flags = G_REST;
+        }
+    }
+    for (s = 0; s < 16; ++s)
+        if (bstep_gate(&response->step[(s + 1) & 15]) == G_REST)
+            response->step[s].flags &= (uint8_t)~BS_SLIDE;
+    /* Dense leads can consume every answer slot: keep one deliberate response. */
+    any = 0;
+    for (s = 0; s < 16; ++s) any |= bstep_gate(&response->step[s]) == G_NOTE;
+    if (!any) {
+        for (s = 0; s < 16; ++s) if (bstep_gate(&a->step[s]) == G_NOTE) {
+            int at = (s + 2) & 15;
+            response->step[at] = a->step[s];
+            response->step[at].flags = G_NOTE;
+            break;
+        }
+    }
+}
