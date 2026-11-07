@@ -2430,9 +2430,14 @@ static void button_tap(int b)
                 say(t, 0);
             } else {
                 uint32_t r = bp->gen.seed ^ plat_ms();
-                tb3po_mutate(bp, &r);
+                int develop = (ui.btn & (1u << B_ENV)) != 0;
+                if (develop) {
+                    ui.btn_used |= 1u << B_ENV;
+                    tb3po_develop(bp, &r);
+                } else
+                    tb3po_mutate(bp, &r);
                 ui.gen_stale[bidx()] = 0;
-                say("MUTATED", 0);
+                say(develop ? "DEVELOPED" : "MUTATED", 0);
             }
             mark_dirty();
         } else if (kbd_on() && steps_view()) {        /* the keyboard's octave */

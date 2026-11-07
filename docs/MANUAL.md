@@ -310,6 +310,11 @@ TB-3PO writes 303 lines for you. Pick a 303 with ALGORITHM and press ARP.
 Press **OCT+** to write a completely new line, or **OCT-** to mutate the current one (about a
 quarter of its steps change).
 
+**Experimental Develop:** hold ENV and press OCT- on TB-3PO to vary nearby pitches while
+keeping rhythm, accents, slides, ties and notes on beat positions. Some gestures may
+leave the phrase unchanged. HOME + REC undoes the action. This does not capture a favorite;
+it is a first prototype of controlled phrase development.
+
 TB-3PO has two pages (press ARP again, or turn SELECT):
 
 - GENERATE: DENS, ACCENT and SLIDE set how many steps play, are accented and slide. OCTS sets

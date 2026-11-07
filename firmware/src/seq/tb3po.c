@@ -137,6 +137,32 @@ void tb3po_mutate(bpart_t *b, uint32_t *rng)
     *rng = r;
 }
 
+void tb3po_develop(bpart_t *b, uint32_t *rng)
+{
+    const tb3po_cfg_t *g = &b->gen;
+    const scale_t *sc = &SCALES[g->scale < TB3PO_NSCALES ? g->scale : 0];
+    int range = clampi(g->oct_range, 1, 3), len = clampi(b->len, 1, NSTEPS);
+    int count = range * sc->len, i;
+    uint32_t r = *rng ? *rng : (g->seed ? g->seed : 1);
+    for (i = 0; i < len; ++i) {
+        int k, nearest = 0, distance = 128, candidate;
+        uint32_t draw;
+        if (i % 4 == 0 || bstep_gate(&b->step[i]) != G_NOTE)
+            continue;
+        draw = rng_u32(&r);
+        if ((draw & 3u) != 0)                       /* change about a quarter of eligible notes */
+            continue;
+        for (k = 0; k < count; ++k) {               /* at most 21 legal pitches */
+            int d = (int)note_of(g, k % sc->len, k / sc->len) - b->step[i].note;
+            if (d < 0) d = -d;
+            if (d < distance) { distance = d; nearest = k; }
+        }
+        candidate = clampi(nearest + ((draw & 4u) ? 1 : -1), 0, count - 1);
+        b->step[i].note = note_of(g, candidate % sc->len, candidate / sc->len);
+    }
+    *rng = r;
+}
+
 uint32_t tb3po_new_seed(uint32_t entropy)
 {
     uint32_t r = entropy * 2654435761u + 0x9E3779B9u;

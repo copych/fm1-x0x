@@ -16,5 +16,7 @@ void tb3po_generate(bpart_t *b);
 /* re-roll ~25 % of the steps, continuing the line's random stream from *rng
  * (pass the part's running state; 0 = start from the seed) */
 void tb3po_mutate(bpart_t *b, uint32_t *rng);
+/* Main-loop action: nearby scale pitches; preserve rhythm, articulation and beat anchors. */
+void tb3po_develop(bpart_t *b, uint32_t *rng);
 /* a new seed from any entropy (time, key presses) */
 uint32_t tb3po_new_seed(uint32_t entropy);

@@ -1,0 +1,19 @@
+wait 300
+turn ALGO 2
+tap ARP
+tap OCT+
+snapline 0
+wait 600
+listen
+tap PLAY
+press ENV
+tap OCT-
+release ENV
+said DEVELOPED
+expect playing 1
+shot develop.png
+wait 600
+press HOME
+tap REC
+release HOME
+expect linechg0 0
