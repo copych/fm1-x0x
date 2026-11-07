@@ -3,7 +3,7 @@
 wait 300
 expect ccoutset 0
 # CC 123 (all notes off) on 303 A's channel ends the note MIDI holds there; CC 120 (all sound off) on the
-# break's lets go of its slices (their sends off, so no tail is left)
+# removed break's channel remains silent, including after all-sound-off
 param 5 2 1 0
 param 5 2 2 0
 param 5 4 1 0
@@ -22,7 +22,7 @@ midi 93 24 7F
 wait 300
 peakreset
 wait 100
-expect peak_db_min -30
+expect peak_db_max -60
 midi B3 78 00
 wait 1500
 peakreset

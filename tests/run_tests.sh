@@ -116,6 +116,11 @@ if command -v emcc >/dev/null 2>&1 && command -v node >/dev/null 2>&1; then   # 
 fi
 for s in tests/scenarios/*.x0x; do
     n=$(basename "$s" .x0x)
+    case "$n" in
+        brkfilter|slices|upload|getting_started|groove|jam|showcase|tour)
+            echo "  skip scenario-$n (legacy breakbeat performance; removed from this build)"
+            continue ;;
+    esac
     mkdir -p "build/scenarios/$n"
     run "scenario-$n" build/host/x0x_host "$s" "build/scenarios/$n"
 done

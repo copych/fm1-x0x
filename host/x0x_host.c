@@ -1153,6 +1153,11 @@ int main(int argc, char **argv)
         } else if (!strcmp(cmd, "wav")) {
             snprintf(out, sizeof out, "%s/%s", dir, a);
             wav_open(out);
+        } else if (!strcmp(cmd, "legacybreak")) { /* fixture: project written by a full X0X build */
+            cur_pat()->brk.steps = 0xFFFFu;
+            cur_pat()->brk.slot_a = 17;
+            cur_pat()->brk.slice[0] = 5;
+            mark_dirty();
         } else if (!strcmp(cmd, "snapline")) {
             int b = atoi(a) % NBASS;
             line_snap[b] = cur_pat()->bass[b];

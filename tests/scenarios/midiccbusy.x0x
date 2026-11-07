@@ -5,7 +5,7 @@ wait 300
 tap GLO
 turn SELECT 1
 turn ALGO 1
-turn SELECT 6
+turn SELECT 5
 turn ALGO 2
 tap GLO
 wait 100

@@ -79,6 +79,7 @@ __attribute__((used, visibility("default"))) uint16_t *web_fb(void) { return fb;
 __attribute__((used, visibility("default"))) uint32_t web_blits(void) { return blits; }
 __attribute__((used, visibility("default"))) uint32_t web_now(void) { return now_ms; }
 __attribute__((used, visibility("default"))) uint32_t web_cpu(void) { return cpu_pct; }
+__attribute__((used, visibility("default"))) uint32_t web_breakbeat(void) { return X0X_BREAKBEAT; }
 
 /* saved objects: the page keeps them (localStorage) and gives them back before boot */
 __attribute__((used, visibility("default"))) uint8_t *web_store(uint32_t obj) { return obj < OBJ_NOBJ ? store[obj] : 0; }

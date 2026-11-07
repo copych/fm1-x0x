@@ -46,7 +46,7 @@ class X0X extends AudioWorkletProcessor {
       this.sentWrites = this.ex.web_store_writes();
       this.ex.web_master(m.master ?? 2800);
       this.ex.web_boot();
-      this.port.postMessage({ type: "ready" });
+      this.port.postMessage({ type: "ready", breakbeat: !!this.ex.web_breakbeat() });
     } else if (!this.ex) {
       return;
     } else if (m.type === "buttons") {

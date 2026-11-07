@@ -142,7 +142,7 @@ kbd { font: 600 .85em ui-monospace, Menlo, monospace; background: var(--card); b
   <div id="live-p" class="sr" aria-live="polite" aria-atomic="true"></div>
 </section>
 
-<section class="breaks" aria-labelledby="breaks-h">
+<section class="breaks" id="breaks-section" aria-labelledby="breaks-h" hidden>
   <h2 id="breaks-h">Your breaks</h2>
   <p>Load your own loops into the three slots, as you would upload them to the FM-1: one file per
     loop (WAV, AIFF or MP3), up to 16 in a slot, about 7 seconds per slot. X0X works out whether a
@@ -817,7 +817,7 @@ async function switchOn() {
     const ready = new Promise((res) => {
       node.port.onmessage = (e) => {
         const m = e.data;
-        if (m.type === "ready") res();
+        if (m.type === "ready") { $("breaks-section").hidden = !m.breakbeat; res(); }
         else if (m.type === "said") heard(m.bytes);
         else if (m.type === "frame") {
           if (m.fb) drawScreen(m.fb);

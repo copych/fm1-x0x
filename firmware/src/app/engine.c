@@ -198,12 +198,16 @@ volatile uint32_t eng_scope_w;
 static drum909_t d909 POOL;
 static drum808_t d808 POOL;
 static bass303_t b303[NBASS] POOL;
+#if X0X_BREAKBEAT
 static breaks_t brk POOL;
+#endif
 static fxbus_t fx POOL;
 static master_t mst;
 #define DLY_LEN 88200
 static int16_t dly_buf[DLY_LEN] POOL;
+#if X0X_BREAKBEAT
 static volatile uint8_t brk_hold;      /* main loop is rewriting the break loops: ISR leaves it alone */
+#endif
 static motion_t mot;
 static const sound_t *mot_base_snd;    /* the knobs' own values (the project's mirror) */
 static uint8_t mot_playing;
@@ -360,7 +364,11 @@ static void apply_param(int t, int v, int i, int val)    /* ISR */
     case T_909: drum909_set(&d909, v, i, val); break;
     case T_808: drum808_set(&d808, v, i, val); break;
     case T_303: if (v >= 0 && v < NBASS) bass303_set(&b303[v], i, val); break;
-    case T_BRK: breaks_set(&brk, BRK_NSET + i, val); break;
+    case T_BRK:
+#if X0X_BREAKBEAT
+        breaks_set(&brk, BRK_NSET + i, val);
+#endif
+        break;
     case T_FX: fxbus_set(&fx, fx_param_at(v, i), val); break;
     case T_MIX:
         if (v < 0 || v >= NPARTS)
@@ -503,7 +511,14 @@ void engine_bass_on(int part, int note, int accent, int slide)
     cq_put(C_BON, (uint32_t)part, (uint32_t)note, (uint32_t)((accent ? 1 : 0) | (slide ? 2 : 0)));
 }
 void engine_bass_off(int part) { cq_put(C_BOFF, (uint32_t)part, 0, 0); }
-void engine_brk_live(int key, int down) { cq_put(C_BRK, (uint32_t)key, (uint32_t)(down != 0), 0); }
+void engine_brk_live(int key, int down)
+{
+#if X0X_BREAKBEAT
+    cq_put(C_BRK, (uint32_t)key, (uint32_t)(down != 0), 0);
+#else
+    (void)key; (void)down;
+#endif
+}
 
 /* ------------------------------------------------------- sequencer sink --- */
 /* probability: each part's (and drum track's) chance on the step playing now, set by its T_PROB lane
@@ -554,6 +569,7 @@ static void s_bon(void *x, int p, int note, int acc, int sl)
         bass303_note_on(&b303[p], note, acc, sl);
 }
 static void s_boff(void *x, int p) { (void)x; bass303_note_off(&b303[p]); }
+#if X0X_BREAKBEAT
 static uint8_t brk_applied[BRK_NSET];  /* the pattern settings the break was last given */
 static void s_brk(void *x, int s16, int bar, float spb, int en)
 {
@@ -574,6 +590,7 @@ static void s_brk(void *x, int s16, int bar, float spb, int en)
     breaks_step(&brk, s16, bar, spb, en);
 }
 static void s_brkstop(void *x) { (void)x; breaks_stop(&brk); }
+#endif
 static void s_midi(void *x, uint8_t st, uint8_t d1, uint8_t d2)
 {
     uint32_t cin = st >= 0xF0 ? 0x0Fu : (uint32_t)(st >> 4);
@@ -585,6 +602,9 @@ static void s_step(void *x, int t, int p)
     (void)x;
     if (t == TRK_DRUM && p == 0 && !(seq.t[TRK_DRUM].bars & 3u))
         director_apply(); /* before any part's first hit on this phrase boundary */
+#if !X0X_BREAKBEAT
+    if (t == TRK_BRK) return; /* dormant project lanes must not automate the live mix */
+#endif
     eng_step[t] = (uint8_t)p;
     if (mot_on)
         motion_step(&mot, t, seq.ppat[t], p, seq_next_step(&seq, t, p), seq_part_len(&seq, t));
@@ -626,7 +646,13 @@ int engine_motion_part(int t, int v)
 int engine_motion_value(int k) { return motion_value(&mot, k); }
 void engine_motion_rec(int k) { motion_req_rec(&mot, k); }
 void engine_motion_hold(int k) { motion_req_hold(&mot, k); }
-static const seq_sink_t SINK = {s_drum_seq, s_bon, s_boff, s_brk, s_brkstop, s_midi, s_step, 0};
+static const seq_sink_t SINK = {s_drum_seq, s_bon, s_boff,
+#if X0X_BREAKBEAT
+    s_brk, s_brkstop,
+#else
+    0, 0,
+#endif
+    s_midi, s_step, 0};
 
 /* ------------------------------------------------------------- MIDI CC --- */
 /* The fixed CC map (engine.h). A part's CCs on its own channel, the mixer's, the FX's and the master's on
@@ -858,8 +884,10 @@ int engine_cc_take(uint32_t *pkt)
 
 /* ---------------------------------------------------------------- MIDI in --- */
 static uint8_t bass_held[NBASS];       /* note held from MIDI, for legato = slide */
+#if X0X_BREAKBEAT
 static uint8_t brk_held POOL;          /* the break's slices held from MIDI (bit: key) */
 
+#endif
 static void midi_in(uint32_t pkt)
 {
     uint8_t st = (uint8_t)(pkt >> 8), d1 = (uint8_t)(pkt >> 16) & 0x7F, d2 = (uint8_t)(pkt >> 24) & 0x7F;
@@ -879,12 +907,14 @@ static void midi_in(uint32_t pkt)
                     bass303_note_off(&b303[k]);
                     bass_held[k] = 0;
                 }
+#if X0X_BREAKBEAT
             if (seq.ch[TRK_BRK] == ch) {
                 for (k = 0; k < 8; k++)
                     if (brk_held >> k & 1u)
                         breaks_live(&brk, k, 0);
                 brk_held = 0;
             }
+#endif
         } else
             cc_in_put(pkt);                             /* the main loop's (ui.c midicc.c) */
         return;
@@ -909,10 +939,12 @@ static void midi_in(uint32_t pkt)
                 bass_held[k] = 0;
             }
         }
+#if X0X_BREAKBEAT
     if (seq.ch[TRK_BRK] == ch && (ty == 0x90 || ty == 0x80) && d1 >= 36 && d1 <= 43) {   /* the break's slices */
         breaks_live(&brk, d1 - 36, ty == 0x90);
         brk_held = (uint8_t)(ty == 0x90 ? brk_held | 1u << (d1 - 36) : brk_held & ~(1u << (d1 - 36)));
     }
+#endif
 }
 
 /* ---------------------------------------------------------------- render --- */
@@ -931,8 +963,10 @@ static void drain(void)
             bass303_note_on(&b303[a], (int)b, (int)(v & 1u), (int)((v >> 1) & 1u));
         else if (type == C_BOFF && a < NBASS)
             bass303_note_off(&b303[a]);
+#if X0X_BREAKBEAT
         else if (type == C_BRK && !brk_hold)
             breaks_live(&brk, (int)a, (int)b);
+#endif
     }
     cq_r = r;
     while (guard-- && plat_midi_in(&pkt))
@@ -1005,7 +1039,10 @@ volatile uint32_t eng_dbg_wait, eng_dbg_nsub;  /* 24 MHz ticks waiting for core 
 
 /* the mix of one stretch between two events: dry left and right, the reverb and delay sends;
  * t0..tr the 808's scratch, kbuf the break's, mono the 909's kit send */
-static float dry_l[256], dry_r[256], rev[256], dly[256], t0[256], t1[256], t2[256], tr[256], kbuf[256], mono[256];
+static float dry_l[256], dry_r[256], rev[256], dly[256], t0[256], t1[256], t2[256], tr[256], mono[256];
+#if X0X_BREAKBEAT
+static float kbuf[256];
+#endif
 
 /* a glide applied in place to a buffer that started at zero: buf * c is 0 + buf * c exactly, so this
  * is add_glide(zeros, buf) to the bit (the same steps of c) */
@@ -1030,7 +1067,9 @@ __attribute__((noinline)) static void scale_glide(float *buf, glide_t *g, uint32
 /* the second core's job (or the first's, after its own part, with one core): the 808 into t0..tr
  * and the break into kbuf; arg bit 8: not timed (the cycle counter is the first core's). Nothing
  * here is mixed: the first core does that afterwards, in one core's order */
+#if X0X_BREAKBEAT
 static int brk_silent_now = 1;
+#endif
 static uint8_t d808_was_active;
 static void core2_job(uint32_t arg)
 {
@@ -1046,12 +1085,15 @@ static void core2_job(uint32_t arg)
         PROF_ADD(PR_808, pt);
         pt = plat_cycles();
     }
+#if X0X_BREAKBEAT
     if (!brk_hold) {
         brk_silent_now = breaks_silent(&brk);             /* the render writes zeros: nothing to mix */
         breaks_render(&brk, kbuf, (int)n);
     }
     if (timed)
         PROF_ADD(PR_BRK, pt);
+#endif
+
 }
 
 /* a drum machine's mix, from its render (L, R, voice sends; mono, its kit send) */
@@ -1135,6 +1177,7 @@ static void render_sub(float *out_l, float *out_r, uint32_t n)
         add_glide(dly, bb[b], &mix_glide[p][GL_DLY], n);
         meter(p, bb[b], mix_level[p], n);
     }
+#if X0X_BREAKBEAT
     if (!brk_hold && !brk_silent_now) {
         float g = mix_level[PART_BRK];
         mix_targets(PART_BRK, g);
@@ -1144,6 +1187,7 @@ static void render_sub(float *out_l, float *out_r, uint32_t n)
         add_glide(dly, kbuf, &mix_glide[PART_BRK][GL_DLY], n);
         meter(PART_BRK, kbuf, g, n);
     }
+#endif
     {
         PROF_T(pf);
         fxbus_process_st(&fx, dry_l, dry_r, rev, dly, out_l, out_r, (int)n);
@@ -1213,7 +1257,12 @@ void engine_render(int32_t *out_lr, uint32_t n)
     }
 }
 
+void engine_master_format(int i, char *buf) { master_format(&mst, i, buf); }
+
+float engine_gr_db(void) { return mst.gr_view; }
+
 /* -------------------------------------------------------------- loops --- */
+#if X0X_BREAKBEAT
 /* a user loop's length in bars: 1, 2, 4 or 8, whichever puts its tempo nearest 120 BPM
  * inside 80..180 (breaks are recorded at their own tempo; the player stretches to ours) */
 static uint8_t loop_bars(uint32_t ns, uint32_t rate)
@@ -1344,8 +1393,8 @@ int engine_brk_outline(int which, uint8_t *peaks, int n)
         peaks[col] = 0;
     return 1;
 }
-float engine_gr_db(void) { return mst.gr_view; }
-void engine_master_format(int i, char *buf) { master_format(&mst, i, buf); }
+
+
 
 void engine_brk_loops(void)
 {
@@ -1373,6 +1422,17 @@ void engine_brk_loops(void)
     brk_hold = 0;
 }
 
+#else
+int engine_brk_nslots(void) { return 0; }
+const char *const *engine_brk_slot_names(void) { return 0; }
+int engine_brk_slice(void) { return -1; }
+void engine_brk_state(int *slice, int *bank, int *div, int *running)
+{ *slice = -1; *bank = 0; *div = 0; *running = 0; }
+int engine_brk_outline(int which, uint8_t *peaks, int n)
+{ int i; (void)which; for (i = 0; i < n; ++i) peaks[i] = 0; return 0; }
+void engine_brk_loops(void) {}
+#endif
+
 void engine_init(pattern_t *patterns, song_t *song, lane_t *lanes, const sound_t *base)
 {
     int p;
@@ -1382,7 +1442,9 @@ void engine_init(pattern_t *patterns, song_t *song, lane_t *lanes, const sound_t
     drum808_init(&d808);
     bass303_init(&b303[0]);
     bass303_init(&b303[1]);
+#if X0X_BREAKBEAT
     breaks_init(&brk);
+#endif
     fxbus_init(&fx, dly_buf, DLY_LEN);
     master_init(&mst);
     seq_init(&seq, patterns);

@@ -6,7 +6,7 @@ tap HOME
 tapkey b2
 tapkey b3
 tapkey b4
-expect mute 29360128
+expect mute 12582912
 tap EDIT
 expect part 0
 # stopped: the key plays its drum

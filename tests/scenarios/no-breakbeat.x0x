@@ -1,0 +1,31 @@
+# Current four-part build: legacy BREAK data is retained but cannot play.
+wait 300
+expect loops 0
+legacybreak
+tap SAVE
+reboot
+expect brk0 1
+expect brkslice0 5
+expect loop_a 17
+expect loops 0
+peakreset
+tap PLAY
+wait 2500
+expect peak_db_max -100
+tap PLAY
+# ALGORITHM stops at 303 B; fifth HOME/mixer key does not select or mute BREAK.
+turn ALGO 100
+expect part 3
+tap HOME
+tapkey b4
+expect mute 0
+tap LFO
+tapkey b4
+expect part 3
+expect mute 0
+# Saving ordinary edits must preserve the dormant legacy pattern fields.
+tap SAVE
+reboot
+expect brk0 1
+expect brkslice0 5
+expect loop_a 17

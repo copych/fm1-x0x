@@ -10,9 +10,9 @@ spin K1 1
 wait 100
 expect sound0.0.0 35
 expect ccouts 0
-# GLO > CC OUT (the eighth row): KNOBS
+# GLO > CC OUT (the seventh row): KNOBS
 tap GLO
-turn SELECT 7
+turn SELECT 6
 turn ALGO 1
 tap GLO
 wait 100
@@ -55,9 +55,9 @@ wait 600
 expect sound0.0.0 80
 expect ccouts 130
 expect cc10.20 80
-# GLO > MIX MIDI CH (the ninth row): 16; the master's FILTER (19) then comes on 16, not 1
+# GLO > MIX MIDI CH (the eighth row): 16; the master's FILTER (19) then comes on 16, not 1
 tap GLO
-turn SELECT 8
+turn SELECT 7
 turn ALGO 15
 tap GLO
 wait 100
@@ -94,7 +94,7 @@ expect sound6.0.13 32
 # ALL: what a lane plays goes out too, and the knob's own value when it stops (a CC wins over the lane for a
 # pass, as a knob). Under KNOBS it does not
 tap GLO
-turn SELECT 7
+turn SELECT 6
 turn ALGO 1
 tap GLO
 wait 100
@@ -107,7 +107,7 @@ expect ccouts 0
 tap PLAY
 wait 200
 tap GLO
-turn SELECT 7
+turn SELECT 6
 turn ALGO 1
 tap GLO
 wait 100

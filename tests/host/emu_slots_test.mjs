@@ -53,9 +53,12 @@ async function run(load) {
   tap(10);
   rec = true;
   r(4000);
-  return { sig, peak };
+  return { sig, peak, breakbeat: ex.web_breakbeat() };
 }
 
 const a = await run(true), b = await run(false);
 console.log(`emu slots: with the loop ${a.sig} (peak ${a.peak.toFixed(3)}), without ${b.sig} (peak ${b.peak.toFixed(3)})`);
-process.exit(a.peak > 0.05 && b.peak > 0.05 && a.sig !== b.sig ? 0 : 1);
+// Without BREAK, loading a loop cannot affect the remaining instrument's audio.
+const ok = a.breakbeat ? a.sig !== b.sig : a.sig === b.sig;
+console.log(`breakbeat ${a.breakbeat ? "enabled" : "removed"}: uploaded loop ${a.breakbeat ? "changes" : "does not change"} audio`);
+process.exit(a.peak > 0.05 && b.peak > 0.05 && ok ? 0 : 1);
