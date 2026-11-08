@@ -1,0 +1,82 @@
+wait 300
+listen
+expect view 9
+expect part 2
+expect live_selected 4
+expect live_layer 0
+shot performer-boot.png
+tap OCT+
+snapline 0
+tap PLAY
+wait 300
+expect playing 1
+# Sound knobs remain direct and never navigate away.
+spin K1 5
+expect sound2.0.0 53
+press EDIT
+expect live_layer 1
+spin K2 1
+expect sound2.0.5 1
+release EDIT
+expect live_layer 0
+expect view 9
+# Linked 303s retain offsets: relative moves apply to both.
+press SEL
+tapkey b3
+release SEL
+expect live_selected 12
+expect part 3
+spin K1 3
+expect sound2.0.0 56
+expect sound2.1.0 51
+expect view 9
+press LFO
+expect live_layer 3
+spin K2 5
+expect sound5.2.3 69
+expect sound5.3.3 69
+wait 80
+shot performer-mix.png
+release LFO
+expect live_layer 0
+wait 100
+expect sound2.0.0 56
+expect sound2.1.0 51
+expect sound5.2.3 69
+expect sound5.3.3 69
+# Composition and its undo preserve later hand changes to sound and mutes.
+tap OCT+
+expect linechg0 1
+snapline 1
+spin K2 4
+expect sound2.1.1 104
+press HOME
+tapkey b2
+release HOME
+expect mute 4194304
+tap REC
+expect linechg0 0
+expect linechg1 1
+expect sound2.1.1 104
+expect mute 4194304
+expect playing 1
+press REC
+tap OCT+
+release REC
+expect linechg0 1
+expect linechg1 0
+expect view 9
+# Direct Director access, visible queued state, and cancellation.
+tap ARP
+shot performer-director.png
+tap ARP
+wait 100
+expect view 9
+tap PLAY
+# Editor access and return use explicit gestures.
+tap SEQ
+expect view 8
+press HOME
+tap EDIT
+release HOME
+expect view 9

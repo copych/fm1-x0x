@@ -23,7 +23,9 @@ const render = (ms) => {
 };
 // as the host script's tapkey (60 ms held, 30 released) and tap (40, 40): kick, steps 1 and 9, PLAY
 const tapkey = (k) => { ex.web_keys(1 << k); render(60); ex.web_keys(0); render(30); };
-render(500);
+ex.web_buttons(1 << 9); render(40); ex.web_buttons(0); render(40);
+for(let i=0;i<2;i++){ ex.web_enc(1,-1); render(80); }
+render(260);
 tapkey(1);
 tapkey(0);
 tapkey(14);

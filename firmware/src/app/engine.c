@@ -51,6 +51,8 @@ static void drum_initial_mix(int kit)
         drum_memory.mix_seen[kit] = 1;
     }
 }
+#include "performer_engine.h"
+
 int engine_director_request(int kit)
 {
     int a = seq.ppat[TRK_BASS0], b = seq.ppat[TRK_BASS0 + 1], d;
@@ -91,6 +93,7 @@ static void director_apply(void) /* render: bounded publication, never generatio
         !director_unchanged(&director_plan, &seq.pat[a].bass[0], &seq.pat[b].bass[1], &seq.pat[d].drum[k]))
         director_result = DIRECTOR_CANCELLED;
     else {
+        perform_capture(&perform_before, (1u << PART_303B) | (1u << k));
         motif_copy(&seq.pat[b].bass[1], &director_plan.response);
         int v;
         for (v = 0; v < NDRUM; ++v) {
@@ -98,6 +101,8 @@ static void director_apply(void) /* render: bounded publication, never generatio
             uint32_t *row = seq.pat[d].drum[k].hit[voice];
             row[0] = (row[0] & 0xFFFF0000u) | (director_plan.support[v] & 0xFFFFu);
         }
+        perform_capture(&perform_after, (1u << PART_303B) | (1u << k));
+        perform_valid = perform_applied = 1;
         director_result = DIRECTOR_APPLIED;
     }
     __asm__ volatile("" ::: "memory");
@@ -157,6 +162,7 @@ static void motif_service(void) /* render context: coherent with automatic mutat
         int b;
         director_pending = DIRECTOR_IDLE;
         director_result = 0;
+        perform_valid = perform_applied = 0;
         for (b = 0; b < NBASS; ++b) motifs.valid[b] = 0;
         for (b = 0; b < NKIT; ++b) {
             drum_memory.valid[b] = 0;
@@ -167,6 +173,11 @@ static void motif_service(void) /* render context: coherent with automatic mutat
         }
         motif_request = 0;
         return;
+    }
+    if (request == MOTIF_PERFORM + 1u) {
+        int result = perform_publish();
+        __asm__ volatile("" ::: "memory");
+        motif_request = 0; motif_result = result; return;
     }
     if (request) {
         int action = (int)(request & 255u) - 1, b = (int)((request >> 8) & 255u);
@@ -179,12 +190,15 @@ static void motif_service(void) /* render context: coherent with automatic mutat
             int k = b - NBASS, i, j;
             dpart_t *p = &seq.pat[request >> 16].drum[k];
             if (action == MOTIF_GENERATE) {
+                perform_capture(&perform_before,1u << k);
                 for (i = 0; i < NDRUM; ++i)
                     for (j = 0; j < NSW; ++j) p->hit[i][j] = drum_memory.stage.drums.generated.hit[i][j];
                 for (j = 0; j < NSW; ++j) p->accent[j] = drum_memory.stage.drums.generated.accent[j];
                 p->len = drum_memory.stage.drums.generated.len;
                 p->rate = drum_memory.stage.drums.generated.rate;
                 drum_memory.cfg[k] = drum_memory.stage.drums.proposed;
+                perform_capture(&perform_after,1u << k);
+                perform_valid = perform_applied = 1;
             } else if (action == MOTIF_LIKE) {
                 drum_memory.phrase[k] = *p;
                 drum_memory.liked_cfg[k] = drum_memory.cfg[k];
@@ -1273,6 +1287,7 @@ void engine_render(int32_t *out_lr, uint32_t n)
 }
 
 void engine_master_format(int i, char *buf) { master_format(&mst, i, buf); }
+int engine_master_value(int i) { return master_get(&mst,i); }
 
 float engine_gr_db(void) { return mst.gr_view; }
 

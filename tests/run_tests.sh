@@ -109,7 +109,7 @@ ENG_U="$(echo firmware/src/dsp/drum909.c firmware/src/dsp/drum808.c firmware/src
 run midicc sh -c "$CC -O2 -ffp-contract=off -std=c99 -Wall -Wextra -Wno-unused-function -Wno-unused-parameter -DX0X_HOST \
     -Ifirmware/src -Ifirmware/src/dsp -Ibuild/gen -o $OUT/midicc_test tests/host/midicc_test.c $ENG_U -lm && $OUT/midicc_test"
 if command -v emcc >/dev/null 2>&1 && command -v node >/dev/null 2>&1; then   # the browser build, when it can be built
-    printf 'wav emu_ref.wav\nwait 500\ntapkey b0\ntapkey w0\ntapkey w8\ntap PLAY\nwait 2960\nwavstop\n' > build/host/emu_ref.x0x
+    printf 'wav emu_ref.wav\ntap SEQ\nturn ALGO -2\nwait 260\ntapkey b0\ntapkey w0\ntapkey w8\ntap PLAY\nwait 2960\nwavstop\n' > build/host/emu_ref.x0x
     run emu sh -c "sh web/emu/build.sh >/dev/null 2>&1 && build/host/x0x_host build/host/emu_ref.x0x build/host >/dev/null && \
         node tests/host/emu_test.mjs build/emu/x0x.wasm build/host/emu_ref.wav"
     run emu-slots node tests/host/emu_slots_test.mjs build/emu/x0x.wasm build/test_loops/loop1.wav
@@ -122,7 +122,10 @@ for s in tests/scenarios/*.x0x; do
             continue ;;
     esac
     mkdir -p "build/scenarios/$n"
-    run "scenario-$n" build/host/x0x_host "$s" "build/scenarios/$n"
+    case "$n" in
+        performer*) run "scenario-$n" build/host/x0x_host "$s" "build/scenarios/$n" ;;
+        *) run "scenario-$n" env X0X_TEST_EDITOR=1 build/host/x0x_host "$s" "build/scenarios/$n" ;;
+    esac
 done
 [ $FAIL -eq 0 ] && echo "all tests passed" || echo "TESTS FAILED"
 exit $FAIL

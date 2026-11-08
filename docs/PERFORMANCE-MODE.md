@@ -1,8 +1,8 @@
 # One performance mode
 
-Design brief from the performer. This is the next interface architecture, not a
-description of controls already implemented. Live4 improves drum composition;
-it still uses the temporary X0X ARP, EDIT, FX and MIX screens.
+Design brief from the performer. Live5 implements the core single-screen
+interface; PERFORMER.md documents its actual controls and remaining DSP gaps.
+This brief retains the full intended behavior for subsequent work.
 
 The performer stays on one performance screen during playback. Target selection,
 sound, composition, mix and temporary effects are direct gestures on that screen.

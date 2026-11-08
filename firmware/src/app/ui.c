@@ -21,8 +21,8 @@ static const int8_t KEY_WHITE[NKEYS] = {0, -1, 1, -1, 2, -1, 3, 4, -1, 5, -1, 6,
 static const int8_t KEY_BLACK[NKEYS] = {-1, 0, -1, 1, -1, 2, -1, -1, 3, -1, 4, -1, -1, 5, -1, 6, -1, 7, -1, -1, 8, -1, 9, -1, -1, 10, -1};
 static uint8_t WHITE_KEY[16], BLACK_KEY[11];
 
-enum { V_HOME, V_PART, V_GEN, V_FX, V_MIX, V_GLO, V_SONG, V_PERF, V_SEQ, NVIEWS };
-static const char *const VIEW_N[NVIEWS] = {"HOME", "", "TB-3PO", "FX", "MIX", "GLOBAL", "SONG", "PERF", "SEQ"};
+enum eUIView { V_HOME, V_PART, V_GEN, V_FX, V_MIX, V_GLO, V_SONG, V_PERF, V_SEQ, V_LIVE, NVIEWS };
+static const char *const VIEW_N[NVIEWS] = {"HOME", "", "TB-3PO", "FX", "MIX", "GLOBAL", "SONG", "PERF", "SEQ", "LIVE"};
 static const uint16_t PART_COL[NPARTS] = {RGB(255, 150, 40), RGB(255, 72, 64), RGB(130, 240, 90), RGB(70, 205, 255),
                                           RGB(214, 120, 255)};
 static const char *const PART_N[NPARTS] = {"909", "808", "303A", "303B", "BREAK"};
@@ -82,6 +82,16 @@ typedef struct {
     uint8_t song_sel;                  /* the SONG screen's bar */
 } ui_t;
 static ui_t ui;
+enum eLiveLayer { LIVE_SOUND, LIVE_EXTRA, LIVE_COMPOSE, LIVE_MIX, LIVE_SEND, LIVE_MASTER, LIVE_LAYERS_COUNT };
+enum eLiveSolo { LIVE_SOLO_NONE, LIVE_SOLO_PART, LIVE_SOLO_INSTRUMENT, LIVE_SOLO_STATES_COUNT };
+enum eLiveEffect { LIVE_FX_NONE = -1, LIVE_FX_LOWPASS, LIVE_FX_HIGHPASS, LIVE_FX_PUMP, LIVE_FX_DRIVE, LIVE_EFFECTS_COUNT };
+static struct {
+    uint8_t selected, capture_mask, capture_action, solo_kind, solo_target, restore_valid;
+    uint8_t capture_pat[LIVE_TARGETS];
+    int8_t fx_key, held_note;
+    uint8_t note_part, solo_part;
+    uint32_t solo_mute, solo_vmute, restore_mute, restore_vmute;
+} live;
 static uint8_t any_button;             /* a button has been pressed since power-on (the footer's first line) */
 #define FOOT_GAP 7                     /* between the footer's parts */
 static uint16_t footer_text(const char **a, const char **b, const char **c);
@@ -172,9 +182,11 @@ static char *put_hex(char *b, uint32_t v, int digits)
 
 static void say_as(const char *a, const char *b, uint32_t flags)
 {
-    char *q = put_s(ui.msg, a);
-    if (b)
-        put_s(q, b);
+    unsigned n = 0;
+    const char *sa = a, *sb = b;
+    while (sa && *sa && n + 1u < sizeof ui.msg) ui.msg[n++] = *sa++;
+    while (sb && *sb && n + 1u < sizeof ui.msg) ui.msg[n++] = *sb++;
+    ui.msg[n] = 0;
     ui.msg_until = plat_ms() + 1300u;
     ann_say(a, b, flags);                         /* and to a screen reader (announce.c) */
 }
@@ -802,12 +814,66 @@ static uint8_t *page_of(int view)
     return &ui.page[view][view == V_PART || view == V_SEQ || view == V_GEN ? ui.part : 0];
 }
 
+static enum eLiveLayer live_layer(void)
+{
+    if (ui.btn & (1u << B_FX)) return LIVE_MASTER;
+    if (ui.btn & (1u << B_LFO)) return (ui.btn & (1u << B_SEL)) ? LIVE_SEND : LIVE_MIX;
+    if (ui.btn & (1u << B_ENV)) return LIVE_COMPOSE;
+    if (ui.btn & (1u << B_EDIT)) return LIVE_EXTRA;
+    return LIVE_SOUND;
+}
+static pref_t live_ref(int part, int knob)
+{
+    enum eLiveLayer layer = live_layer();
+    int t = part < NKIT ? (part ? T_808 : T_909) : T_303;
+    int v = part < NKIT ? ui.sel[part] : part - NKIT;
+    if (layer == LIVE_MASTER) {
+        if (knob < 2) return PR(R_ENG, T_MST, 0, knob ? MST_PUMP : MST_DJF);
+        return PR(R_ENG, T_FX, 0, knob == 2 ? FX_DL_FDBK : FX_RV_LEVEL);
+    }
+    if (layer == LIVE_MIX) {
+        static const uint8_t mix[4] = {MX_LEVEL,MX_PAN,MX_REV,MX_DLY};
+        return PR(R_ENG,T_MIX,part,mix[knob]);
+    }
+    if (layer == LIVE_SEND) {
+        static const char *const names[4] = {"Level","Pan","Rev","Dly"};
+        if (part < NKIT) return find_ref(t,v,names[knob]);
+        static const uint8_t mix[4] = {MX_LEVEL,MX_PAN,MX_REV,MX_DLY};
+        return PR(R_ENG,T_MIX,part,mix[knob]);
+    }
+    if (layer == LIVE_COMPOSE) {
+        if (part < NKIT) return knob < 2 ? PR(R_DGEN,part,0,knob) :
+            knob == 2 ? PR(R_SWING,0,0,0) : PR(R_ACCENT,0,0,0);
+        return PR(R_GEN,part-NKIT,0,knob);
+    }
+    if (part >= NKIT) {
+        static const uint8_t extra[4] = {BASS303_ACCENT,BASS303_WAVE,BASS303_DRIVE,BASS303_DRVTYPE};
+        return PR(R_ENG,T_303,part-NKIT,layer == LIVE_EXTRA ? extra[knob] : knob);
+    }
+    if (layer == LIVE_EXTRA) {
+        static const char *const names[4] = {"Level","Pan","Rev","Dly"};
+        return find_ref(t,v,names[knob]);
+    }
+    if (knob == 0) return find_ref(t,v,"Tune");
+    if (knob == 1) {
+        pref_t r = find_ref(t,v,"Snappy");
+        if (r.kind == R_NONE) r = find_ref(t,v,"Attack");
+        if (r.kind == R_NONE) r = find_ref(t,v,"Tone");
+        return r.kind == R_NONE ? find_ref(t,v,"Decay") : r;
+    }
+    return find_ref(t,v,knob == 2 ? "Decay" : "Drive");
+}
 static void build_pages(void)
 {
     int p = ui.part, b = bidx();
     pg.n = pg.nmore = 0;
     pg_grp = GR_NONE;
     switch (ui.view) {
+    case V_LIVE: {
+        static const char *const names[LIVE_LAYERS_COUNT] = {"SOUND","EXTRA","COMPOSE","MIX","INST MIX","MASTER FX"};
+        add_page(names[live_layer()],live_ref(ui.part,0),live_ref(ui.part,1),live_ref(ui.part,2),live_ref(ui.part,3));
+        break;
+    }
     case V_HOME:                                       /* the pattern: how the parts run through it */
     case V_GLO:
         add_page("PERFORM", PR(R_TEMPO, 0, 0, 0), PR(R_SWING, 0, 0, 0), PR(R_ENG, T_MST, 0, MST_DJF),
@@ -1594,6 +1660,7 @@ static void perf_test_tick(void)
 }
 
 static void set_view(int v);
+static void live_leave(void);
 
 static void run_action(int act, int arg)
 {
@@ -1709,6 +1776,16 @@ static int32_t accel(int role, int32_t s, int range)
 
 static void set_view(int v)
 {
+    if (ui.view == V_LIVE && v != V_LIVE) live_leave();
+    if (v == V_LIVE) {
+        int b;
+        seq.song_on = seq.song_rec = 0; ui.rec = 0;
+        if (ui.part >= LIVE_TARGETS) ui.part = PART_303B;
+        for (b = 0; b < NBASS; ++b) if (kbd_held_note[b]) {
+            engine_bass_off(b); kbd_held_note[b] = 0;
+        }
+        live.selected = (uint8_t)(1u << ui.part);
+    }
     if (v != ui.view)
         ui.prev_view = ui.view;
     ui.view = (uint8_t)v;
@@ -2132,8 +2209,11 @@ static void mute_track(int km, int v)                /* one drum track on / off 
     say(track_muted(km, v) ? "MUTED " : "UNMUTED ", engine_voice_name(km ? T_808 : T_909, v));
 }
 
+#include "performer_ui.h"
+
 static void key_event(int k, int down)
 {
+    if (ui.view == V_LIVE && ui.overlay == O_NONE) { live_key(KEY_BLACK[k],KEY_WHITE[k],k,down); return; }
     int w = KEY_WHITE[k], bl = KEY_BLACK[k], wp = w >= 0 ? ui.pbank * 16 + w : -1;   /* wp: a white key's pattern */
     if (ui.overlay == O_ASK || ui.view == V_PERF || perf_testing())
         return;
@@ -2319,6 +2399,10 @@ static void close_overlay(void)
 
 static void button_tap(int b)
 {
+    if (b == B_EDIT && (ui.btn & (1u << B_HOME))) {
+        ui.btn_used |= 1u << B_HOME; set_view(V_LIVE); return;
+    }
+    if (ui.view == V_LIVE && ui.overlay == O_NONE && live_button(b)) return;
     if (perf_testing()) {                             /* the test owns the transport: HOME or PLAY stop it */
         if ((b == B_HOME || b == B_PLAY) && perf.phase != 3)
             perf_test_abort();
@@ -2563,16 +2647,15 @@ static void input(void)
             if (i == B_SEQ && (btn & (1u << B_HOME)) && ui.overlay != O_ASK && !perf_testing()) {
                 ui.btn_used |= m | 1u << B_HOME;      /* HOME + SEQ: tap tempo (its release does nothing) */
                 tap_tempo();
-            } else if (i == B_REC || i == B_PLAY)             /* transport acts on the press: timing */
+            } else if ((i == B_REC && ui.view != V_LIVE) || i == B_PLAY)             /* transport acts on the press: timing */
                 button_tap((int)i);
-        } else if (!(ui.btn_used & m) && i != B_REC && i != B_PLAY) {
+        } else if (!(ui.btn_used & m) && (i != B_REC || ui.view == V_LIVE) && i != B_PLAY) {
             button_tap((int)i);
         }
     }
     if (btn || keys || btn != ui.btn || keys != ui.keys)
         ui.act_t = plat_ms();                         /* held or changed: being played */
-    copy_tick(btn, keys);
-    help_tick(btn, keys);
+    if (ui.view != V_LIVE) { copy_tick(btn, keys); help_tick(btn, keys); }
     ui.btn = btn;
     ch = keys ^ ui.keys;
     ui.keys = keys;
@@ -2592,6 +2675,28 @@ static void input(void)
         for (i = 0; i < NE; i++)
             enc((int)i);
         return;
+    }
+    if (ui.view == V_LIVE && ui.overlay == O_NONE) {
+        if (!(ui.btn & (1u << B_FX))) live_fx_release();
+        if ((e = enc(EN_SELECT)) != 0) {
+            float bpm = seq.bpm + (float)e;
+            seq.bpm = bpm < 20.0f ? 20.0f : bpm > 275.0f ? 275.0f : bpm; mark_dirty();
+        }
+        if ((e = enc(EN_ALGO)) != 0) {
+            int p = ui.part + (e > 0 ? 1 : -1);
+            live_select(p < 0 ? 0 : p >= LIVE_TARGETS ? LIVE_TARGETS-1 : p,0);
+        }
+        if ((e = enc(EN_PRESET)) != 0) {
+            if (is_drum() && (ui.btn & (1u << B_EDIT))) {
+                ui.btn_used |= 1u << B_EDIT;
+                turn_ref(find_ref(ui.part ? T_808 : T_909,ui.sel[ui.part],"Dist"),e,EN_PRESET);
+            } else if (is_drum()) {
+                int v = ui.sel[ui.part] + (e > 0 ? 1 : -1);
+                ui.sel[ui.part] = (uint8_t)(v < 0 ? 0 : v >= NDRUM ? NDRUM-1 : v);
+            } else turn_ref(PR(R_ENG,T_303,bidx(),BASS303_WAVE),e,EN_PRESET);
+        }
+        for (i = 0; i < 4; ++i) if ((e = enc(EN_K1+(int)i)) != 0) live_knob((int)i,e);
+        build_pages(); return;
     }
     if ((e = enc(EN_SELECT)) != 0) {             /* SELECT: move; with HOME held: tempo */
         if (held_any_step() >= 0 && !(ui.btn & (1u << B_HOME))) {
@@ -3873,6 +3978,9 @@ static int help_fits(void)
 static uint16_t footer_text(const char **a, const char **b, const char **c)
 {
     *a = *b = *c = 0;
+    if (ui.view == V_LIVE) {
+        *a = "HOME MUTE / ARP DIR / REC UNDO"; return C_DIM;
+    }
     if (!any_button) {
         *a = "HOLD ANY BUTTON: WHAT IT DOES";
         return C_GRAY;
@@ -3934,9 +4042,11 @@ static void draw_footer(void)
     segs(4, vc(&FONT_T, FOOT_Y, 9), &FONT_T, col, FOOT_GAP, a, b, c, 0);
 }
 
+#include "performer_draw.h"
+
 static void draw_main(void)
 {
-    int band, readout = ui.touched >= 0 && (int32_t)(ui.touch_until - plat_ms()) > 0 && ui.overlay == O_NONE;
+    int band, readout = ui.view != V_LIVE && ui.touched >= 0 && (int32_t)(ui.touch_until - plat_ms()) > 0 && ui.overlay == O_NONE;
     if (!readout)
         ui.touched = -1;
     cv_begin(240, 2 * BAND_H, C_BLACK);           /* both bands, then one transfer: no tear between them */
@@ -3948,6 +4058,8 @@ static void draw_main(void)
             draw_ask(band);
         else if (ui.overlay == O_LIST)
             draw_list(band);
+        else if (ui.view == V_LIVE)
+            draw_live(band);
         else if (ui.view == V_HOME)
             draw_home(band);
         else if (ui.view == V_FX)
@@ -4153,6 +4265,19 @@ static void leds(void)
 {
     uint32_t b = 0, k = 0, d = 0, i;
     int blink = (ui.frame & 8u) != 0;
+    if (ui.view == V_LIVE) {
+        b = ui.btn;
+        if (seq.playing) b |= 1u << B_PLAY;
+        for (i = 0; i < LIVE_TARGETS; ++i) {
+            if ((live.selected & (1u << i)) && !(part_muted((int)i) && blink)) k |= 1u << BLACK_KEY[i];
+            else if (!part_muted((int)i)) d |= 1u << BLACK_KEY[i];
+        }
+        if (is_drum()) for (i = 0; i < NDRUM; ++i) {
+            if (i == ui.sel[ui.part] && !(track_muted(ui.part,(int)i) && blink)) k |= 1u << WHITE_KEY[i];
+            else if (!track_muted(ui.part,(int)i)) d |= 1u << WHITE_KEY[i];
+        }
+        plat_leds(b,k); plat_keys_dim(d); plat_play_red(0); return;
+    }
     if (seq.playing && eng_step[TRK_DRUM] % 4 == 0)
         b |= 1u << B_PLAY;
     if (ui.rec)
@@ -4685,9 +4810,11 @@ void ui_init(void)
             BLACK_KEY[KEY_BLACK[i]] = (uint8_t)i;
     }
     corners_init();
-    ui.view = V_PART;
+    ui.view = V_LIVE;
     ui.prev_view = V_PART;
-    ui.part = PART_909;
+    ui.part = PART_303A;
+    live.selected = 1u << PART_303A; live.capture_mask = 0;
+    live.solo_kind = live.restore_valid = 0; live.fx_key = live.held_note = -1;
     ui.held_step = -1;
     ui.brk_held = -1;
     ui.hold_step = -1;
@@ -4739,7 +4866,9 @@ void ui_frame(void)
 {
     uint32_t i;
     int motif_done = engine_motif_result();
-    if (motif_done < 0) warn("NO LIKED PHRASE", 0);
+    if (motif_done == -2) warn("COMPOSITION CANCELLED",0);
+    else if (motif_done < 0) warn("NO LIKED PHRASE", 0);
+    else if (motif_done == MOTIF_PERFORM+1) { mark_dirty(); say("MUSIC UPDATED",0); }
     else if (motif_done == MOTIF_LIKE + 1) say("LIKED", 0);
     else if (motif_done == MOTIF_RETURN + 1) {
         mark_dirty();
@@ -4755,6 +4884,7 @@ void ui_frame(void)
         if (directed == DIRECTOR_APPLIED) { mark_dirty(); say("ENSEMBLE READY", 0); }
         else if (directed == DIRECTOR_CANCELLED) say("DIRECTOR CANCELLED", 0);
     }
+    live_capture_tick();
     input();
     undo_tick();
     autosave();

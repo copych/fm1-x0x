@@ -30,6 +30,7 @@ enum { PART_909, PART_808, PART_303A, PART_303B, PART_BRK, NPARTS };
 #define X0X_BREAKBEAT 0
 #endif
 #define NPERF_PARTS (X0X_BREAKBEAT ? NPARTS : PART_BRK)
+#define LIVE_TARGETS (NKIT + NBASS)
 /* T_MIX, per part: level, reverb send, delay send, pan (64 = centre) */
 enum { MX_LEVEL, MX_REV, MX_DLY, MX_PAN, MX_NPARAMS };
 #define NVOICES_MAX 12                 /* a drum machine: 11 tracks + the kit */
@@ -43,7 +44,10 @@ typedef struct {
 } sound_t;
 
 extern seq_t seq;                      /* the sequencer (its pattern pointer is the project's) */
-enum eMotifAction { MOTIF_LIKE, MOTIF_RETURN, MOTIF_GENERATE, MOTIF_ACTIONS_COUNT };
+enum eMotifAction { MOTIF_LIKE, MOTIF_RETURN, MOTIF_GENERATE, MOTIF_PERFORM, MOTIF_ACTIONS_COUNT };
+enum ePerformAction { PERFORM_NEW, PERFORM_DEVELOP, PERFORM_RETURN, PERFORM_UNDO, PERFORM_REDO, PERFORM_ACTIONS_COUNT };
+int engine_perform_request(enum ePerformAction action, unsigned mask, uint32_t entropy);
+int engine_director_pending(void);
 /* Main -> render mailbox: one outstanding operation; 0 busy/invalid, 1 accepted.
  * Completion: 0 pending/none, action+1 success, -1 no capture. Poll on main. */
 int engine_motif_request(enum eMotifAction action, int bass, int pattern);
@@ -109,6 +113,7 @@ void engine_motion_rec(int lane);                           /* record a pass fro
 void engine_motion_hold(int lane);                          /* the knob wins for a pass */
 float engine_gr_db(void);                                   /* master compressor gain reduction (UI meter) */
 void engine_master_format(int i, char *buf);                /* a master pot in its unit */
+int engine_master_value(int i); /* control/UI readback of the active master pot */
 /* MIDI CC (the fixed map: docs/MANUAL.md section 16). A role is a part (PART_*), its CCs on its own channel,
  * or CC_ROLE_MIX: the mixer, the FX and the master, on MIX MIDI CH */
 enum { CC_OUT_OFF, CC_OUT_KNOBS, CC_OUT_ALL };

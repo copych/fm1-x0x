@@ -1,0 +1,72 @@
+wait 300
+tapkey b0
+expect part 0
+expect view 9
+tap OCT+
+expect vmute 1662
+# White keys select instruments; HOME+white toggles their participation.
+tapkey w1
+expect sel 1
+expect vmute 1662
+press HOME
+tapkey w1
+release HOME
+expect vmute 1660
+expect view 9
+press ENV
+expect live_layer 2
+turn K2 25 100
+expect hit0.7.1 1
+release ENV
+expect live_layer 0
+expect vmute 1660
+press EDIT
+spin K1 -5
+release EDIT
+expect view 9
+wait 80
+shot performer-drums.png
+# Instrument solo and restoration preserve the manually chosen mix.
+press REC
+tapkey w1
+release REC
+expect live_solo 2
+expect view 9
+tapkey b1
+press REC
+tapkey w1
+release REC
+expect live_solo 2
+expect mute 12584959
+tap REC
+expect live_solo 0
+expect vmute 1660
+tapkey b0
+# Part solo does not turn a manually muted instrument back on.
+press REC
+tapkey b2
+release REC
+expect live_solo 1
+tap REC
+expect live_solo 0
+expect vmute 1660
+# Restore the mix captured before the first manual mute gesture.
+press HOME
+tap SEL
+release HOME
+expect vmute 1662
+expect mute 0
+expect view 9
+
+press EDIT
+turn PRESET 1
+release EDIT
+expect sound0.1.6 1
+# Mutes remain reachable while an FX layer is held.
+press FX
+press HOME
+tapkey w1
+release HOME
+release FX
+expect vmute 1660
+expect live_fx -1

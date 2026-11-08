@@ -516,6 +516,9 @@ static void boot(void)
     engine_brk_loops();
     lcd_fill(0, 0, 240, 240, C_BLACK);
     ui_init();
+#ifndef X0X_WEB
+    if (getenv("X0X_TEST_EDITOR")) { ui.view = V_PART; ui.part = PART_909; build_pages(); }
+#endif
 }
 
 static uint8_t last_pat = 0xFF;
@@ -976,6 +979,12 @@ static int expect(const char *what, const char *val)
         got = (int)seq.mute;
     else if (!strcmp(what, "vmute"))                /* drum tracks muted on their own (bit kit * 11 + track) */
         got = (int)seq.vmute;
+    else if (!strcmp(what, "live_selected")) got = live.selected;
+    else if (!strcmp(what, "live_layer")) got = live_layer();
+    else if (!strcmp(what, "live_fx")) got = live.fx_key;
+    else if (!strcmp(what, "live_solo")) got = live.solo_kind;
+    else if (!strcmp(what, "mastermode")) got = engine_master_value(MST_MODE);
+    else if (!strcmp(what, "mastercutoff")) got = engine_master_value(MST_CUTOFF);
     else if (!strcmp(what, "loops"))
         got = engine_brk_nslots();
     else if (!strcmp(what, "loop_a"))

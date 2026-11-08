@@ -46,6 +46,12 @@ async function run(load) {
     if (ex.web_slot_zone(0, 0, pcm.length, rate) !== 0) throw new Error("zone refused");
     ex.web_slots_changed();
   }
+  if (!ex.web_breakbeat()) {
+    turn(1, 4);                                        // performer focus: 303 B
+    tap(13);                                          // generate a real phrase
+    tap(10); rec = true; r(4000);
+    return { sig, peak, breakbeat: 0 };
+  }
   turn(1, 4);                                          // ALGORITHM to BREAK
   tap(4); tap(4);                                      // EDIT to the LOOPS page (GROOVE, RETRIG, LOOPS)
   turn(3, 2);                                          // KNOB 1: loop A two on (the first user loop)
