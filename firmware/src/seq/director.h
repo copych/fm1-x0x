@@ -17,7 +17,7 @@ typedef struct {
 typedef struct {
     director_context_t context;
     bpart_t response;
-    uint32_t source_hash[NBASS + 1], support[3];
+    uint32_t source_hash[NBASS + 1], support[NDRUM];
     uint8_t pattern[NBASS + 1], kit;
 } director_plan_t;
 
@@ -54,13 +54,11 @@ static inline int director_prepare(director_plan_t *p, const bpart_t *a,
     p->kit = (uint8_t)kit;
     tb3po_response(&p->response, a);
     drumgen_generate(&generated, kit, cfg);
-    p->support[0] = generated.hit[0][0];
-    p->support[1] = generated.hit[1][0];
-    p->support[2] = generated.hit[hat][0];
+    for (s = 0; s < NDRUM; ++s) p->support[s] = generated.hit[s][0];
     for (s = 0; s < 16; ++s)
         if ((s & 3) && (bstep_gate(&a->step[s]) == G_NOTE ||
              bstep_gate(&p->response.step[s]) == G_NOTE))
-            p->support[2] &= ~(1u << (s & 31));
+            p->support[hat] &= ~(1u << (s & 31));
     return 1;
 }
 /* Cancel stale plans when the performer changes their source material. */

@@ -1,0 +1,67 @@
+wait 300
+tap ARP
+turn K2 -50 100
+expect vmute 1662
+expect hit0.0.0 1
+expect hit0.0.4 0
+expect hit0.9.0 1
+expect hit0.7.2 0
+# Open the prepared crash part; subsequent generation must keep that choice.
+press HOME
+tapkey b9
+release HOME
+expect vmute 1150
+turn K2 25 100
+expect hit0.0.4 1
+expect hit0.0.8 1
+expect hit0.0.12 1
+expect hit0.7.2 1
+expect hit0.7.0 0
+expect vmute 1150
+turn K2 25 100
+expect hit0.7.0 1
+expect hit0.7.1 0
+turn K2 25 100
+expect hit0.7.1 1
+expect hit0.7.15 1
+expect vmute 1150
+turn K2 25 100
+expect hit0.1.4 1
+expect hit0.2.14 1
+expect hit0.3.15 1
+expect hit0.4.6 1
+expect hit0.5.6 1
+expect hit0.6.4 1
+expect hit0.8.14 1
+expect hit0.7.14 0
+expect hit0.10.2 1
+# An explicit mute made before the other kit's first generation takes precedence.
+turn ALGO 1
+press HOME
+tapkey b1
+release HOME
+expect vmute 5246
+tap OCT+
+expect vmute 5246
+turn K2 50 100
+expect vmute 5246
+expect hit1.8.0 1
+expect hit1.9.14 1
+expect hit1.10.14 0
+# Stress the generated ensemble: all 909 instruments, all 808 except manually muted SD.
+turn ALGO -1
+press HOME
+tapkey b1
+tapkey b2
+tapkey b3
+tapkey b4
+tapkey b5
+tapkey b6
+tapkey b10
+release HOME
+expect vmute 4096
+tap PLAY
+wait 5000
+expect playing 1
+expect peak_db_min -30
+expect vmute 4096

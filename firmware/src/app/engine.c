@@ -32,7 +32,7 @@ static volatile uint32_t director_result X0X_POOL;
 static struct {
     dpart_t phrase[NKIT];
     drumgen_cfg_t cfg[NKIT], liked_cfg[NKIT];
-    uint8_t valid[NKIT];
+    uint8_t valid[NKIT], mix_seen[NKIT];
     /* Exclusive commands share staging to preserve the target's 8 KiB reserve. */
     union {
         struct { dpart_t generated; drumgen_cfg_t proposed; } drums;
@@ -41,6 +41,16 @@ static struct {
 } drum_memory X0X_POOL;
 #define director_plan (drum_memory.stage.director)
 
+/* Starting participation is applied only once; manual mute choices take priority. */
+void engine_drum_mix_touched(int kit)
+{ if ((unsigned)kit < NKIT) drum_memory.mix_seen[kit] = 1; }
+static void drum_initial_mix(int kit)
+{
+    if (!drum_memory.mix_seen[kit]) {
+        seq.vmute |= drumgen_initial_mutes(kit) << (kit * NDRUM);
+        drum_memory.mix_seen[kit] = 1;
+    }
+}
 int engine_director_request(int kit)
 {
     int a = seq.ppat[TRK_BASS0], b = seq.ppat[TRK_BASS0 + 1], d;
@@ -54,6 +64,8 @@ int engine_director_request(int kit)
                           &seq.pat[d].drum[kit], kit, &drum_memory.cfg[kit])) return 0;
     director_plan.pattern[0] = (uint8_t)a; director_plan.pattern[1] = (uint8_t)b;
     director_plan.pattern[2] = (uint8_t)d;
+    __asm__ volatile("" ::: "memory");
+    drum_initial_mix(kit);
     __asm__ volatile("" ::: "memory");
     director_pending = DIRECTOR_QUEUED;
     return 1;
@@ -81,8 +93,8 @@ static void director_apply(void) /* render: bounded publication, never generatio
     else {
         motif_copy(&seq.pat[b].bass[1], &director_plan.response);
         int v;
-        for (v = 0; v < 3; ++v) {
-            int voice = v == 2 ? (k ? 10 : 7) : v;
+        for (v = 0; v < NDRUM; ++v) {
+            int voice = v;
             uint32_t *row = seq.pat[d].drum[k].hit[voice];
             row[0] = (row[0] & 0xFFFF0000u) | (director_plan.support[v] & 0xFFFFu);
         }
@@ -124,6 +136,8 @@ int engine_drum_generate(int kit, int pattern, int parameter, uint32_t value)
     /* Main owns staging until request publication. Render only copies completed hits. */
     drumgen_generate(&drum_memory.stage.drums.generated, kit, &drum_memory.stage.drums.proposed);
     __asm__ volatile("" ::: "memory");
+    drum_initial_mix(kit);
+    __asm__ volatile("" ::: "memory");
     motif_request = MOTIF_GENERATE + 1u + ((uint32_t)(NBASS + kit) << 8) + ((uint32_t)pattern << 16);
     return 1;
 }
@@ -146,6 +160,7 @@ static void motif_service(void) /* render context: coherent with automatic mutat
         for (b = 0; b < NBASS; ++b) motifs.valid[b] = 0;
         for (b = 0; b < NKIT; ++b) {
             drum_memory.valid[b] = 0;
+            drum_memory.mix_seen[b] = 0;
             drum_memory.cfg[b].seed = (uint32_t)b + 1u;
             drum_memory.cfg[b].weird = 0;
             drum_memory.cfg[b].full = 50;

@@ -29,7 +29,7 @@ int main(void)
     assert(p.context.role[0] == DIRECTOR_LEAD && p.context.role[1] == DIRECTOR_RESPONSE &&
            p.context.role[2] == DIRECTOR_SUPPORT && p.context.root == a.gen.root);
     assert(p.response.step[2].note == 45 && bstep_gate(&p.response.step[2]) == G_NOTE);
-    assert(!(p.support[2] & ((1u << 9) | (1u << 10) | (1u << 11))));
+    assert(!(p.support[7] & ((1u << 9) | (1u << 10) | (1u << 11))));
     assert(bstep_gate(&p.response.step[10]) == G_REST); /* lead's own attack wins */
     assert(!(p.response.step[6].flags & BS_SLIDE)); /* no slide into silence */
     assert(sm_get(d.hit[3], 5) && sm_get(d.accent, 7));
@@ -45,12 +45,12 @@ int main(void)
     assert(!director_prepare(&p, &a, &b, &d, NKIT, &cfg));
     for (s = 0; s < NSTEPS; ++s) a.step[s].flags = G_REST;
     assert(!director_prepare(&p, &a, &b, &d, 0, &cfg));
-    /* Dense and extreme-pitch leads remain bounded; full zero is real silence. */
+    /* Dense/extreme-pitch leads remain bounded; Full zero retains sparse anchors. */
     for (s = 0; s < 16; ++s) { a.step[s].flags = G_NOTE | BS_SLIDE; a.step[s].note = 127; }
     cfg.full = 0;
     assert(director_prepare(&p, &a, &b, &d, 1, &cfg));
     for (s = 0; s < 16; ++s) assert(p.response.step[s].note <= 127);
-    for (k = 0; k < 3; ++k) assert(!p.support[k]);
+    for (k = 0; k < NDRUM; ++k) assert(p.support[k] == ((k == 0 || k == 8) ? 1u : 0u));
     puts("director: lead identity, response, shared vocabulary, deterministic support, manual-edit invalidation, bounds OK");
     return 0;
 }

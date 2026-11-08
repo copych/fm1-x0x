@@ -2127,6 +2127,7 @@ static void mute_part(int p)                         /* a whole part on / off (H
 static int track_muted(int km, int v) { return (int)(seq.vmute >> (km * NDRUM + v) & 1u); }
 static void mute_track(int km, int v)                /* one drum track on / off */
 {
+    engine_drum_mix_touched(km);
     seq.vmute ^= 1u << (km * NDRUM + v);
     say(track_muted(km, v) ? "MUTED " : "UNMUTED ", engine_voice_name(km ? T_808 : T_909, v));
 }

@@ -2,7 +2,9 @@ wait 300
 listen
 tap ARP
 turn K2 -50 100
-expect hit0.0.0 0
+expect hit0.0.0 1
+expect hit0.9.0 1
+expect vmute 1662
 turn K2 50 100
 expect hit0.0.0 1
 expect hit0.1.4 1
@@ -15,7 +17,7 @@ said LIKED
 tap PLAY
 turn K1 100 100
 turn K2 -50 100
-expect hit0.0.0 0
+expect hit0.0.0 1
 press LFO
 tap OCT-
 release LFO
@@ -45,12 +47,13 @@ said GROOVE GENERATED
 expect hit1.0.0 1
 expect hit1.10.2 1
 expect hit1.7.2 0
+expect vmute 1046142
 press ENV
 tap OCT+
 release ENV
 said LIKED
 turn K2 -50 100
-expect hit1.0.0 0
+expect hit1.0.0 1
 press LFO
 tap OCT-
 release LFO

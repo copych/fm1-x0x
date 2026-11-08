@@ -52,6 +52,7 @@ void engine_motif_clear(void); /* main: clear runtime captures at next render bl
 /* Motif targets NBASS + kit address drums. Runtime generator controls only. */
 int engine_drum_generate(int kit, int pattern, int parameter, uint32_t value);
 int engine_drum_value(int kit, int parameter);
+void engine_drum_mix_touched(int kit); /* main: preserve manual participation choices */
 /* Explicit ensemble action; 1 queued, 0 busy/unsupported. Main-loop only.
  * Applies stopped or on the next four-bar boundary; never changes A or sound/mix. */
 int engine_director_request(int kit);

@@ -1,5 +1,9 @@
 # Musical Director embryo
 
+Live4 extends the drum plan to all eleven instruments and adds predictable groove
+standards/initial participation. See DRUM-STANDARDS.md for current drum behavior;
+the validation record below describes the initial live2 Director implementation.
+
 The Director coordinates musical relationships. The 303 and drum generators still
 produce the material; the Director does not own synthesis, effects, mixing or storage.
 
@@ -14,7 +18,7 @@ The first relationship is deliberately small:
   with a separate generator seed.
 - The selected drum kit supplies kick, snare and closed hat using its current
   Straight–Weird / Hollow–Full settings. Hats leave space around the acid parts.
-  Other percussion rows, hidden steps and drum accents remain as edited.
+  Live4 generates all instrument rows; hidden steps and drum accents remain as edited.
 
 From a 303 view the supporting kit is 909; from a drum view it is that kit.
 Both 303s and the supporting kit must use 16 steps at sixteenth-note rate,
@@ -56,7 +60,7 @@ without retaining three full source copies. This is change detection, with the
 usual possibility of a hash collision, not a cryptographic guarantee.
 
 The audio boundary checks at most 388 source bytes, copies one 144-byte bass part
-and publishes three drum words. Actual timing must still be measured on FM-1.
+and publishes eleven drum words (three in live2). Actual timing must still be measured on FM-1.
 No project/storage format, synthesis parameters, mutes, solo, FX, clocks,
 bootloader or flash layout changes are introduced.
 
