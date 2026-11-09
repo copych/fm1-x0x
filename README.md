@@ -1,87 +1,75 @@
-# X0X for the M-VAVE FM-1
+# X0X Live for the M-VAVE FM-1
 
-X0X turns the M-VAVE FM-1 into a groovebox: a **909**, an **808**, two **303s** with an acid line
-generator, and a **breakbeat player**, all playing at once. Each part can play its own pattern,
-you can string patterns into a song, and you can record knob moves. Everything runs in stereo,
-with a shared reverb and tape delay and a punchy master compressor. Over USB, the FM-1 is both a
-MIDI device and an audio input, with no driver needed.
+Turn your FM-1 into an instrument for live generative acid performance. Discover a bassline, develop it while it plays, bring in drums, and shape the sound with your hands. Two independent 303s, 909 and 808 drum machines, and a single LIVE screen keep musical changes, sound controls and mixing close together.
 
-The factory sound is set up for big beat, so it should make noise the moment you press PLAY.
+**Current version: 1.2.1-live5 — experimental.** This fork builds on X0X 1.2.1. The new performance workflow has not yet been validated on an actual FM-1.
 
-[![X0X running on the FM-1 (watch on YouTube)](https://img.youtube.com/vi/cZLYrZaLDUk/maxresdefault.jpg)](https://www.youtube.com/watch?v=cZLYrZaLDUk)
+- **[Try the browser emulator](https://copych.github.io/fm1-x0x/emu/)** — no hardware needed.
+- **[Install on your FM-1](https://copych.github.io/fm1-x0x/install/)** — Chrome or Edge, over USB.
+- **[Performer controls](https://copych.github.io/fm1-x0x/performance/)** — complete gestures and screenshots.
+- **[Download live5 firmware](https://copych.github.io/fm1-x0x/firmware/x0x-1.2.1-live5.fwsc)**.
 
-- **Try it in your browser** (no FM-1 needed): <https://charlesvestal.github.io/fm1-x0x/emu/>
-- **Install it** (Chrome or Edge, with the FM-1 plugged in): <https://charlesvestal.github.io/fm1-x0x/install/>
-- **Read the manual**: <https://charlesvestal.github.io/fm1-x0x/manual/>
-- **Download the firmware file**: [releases](https://github.com/charlesvestal/fm1-x0x/releases)
+![LIVE performer screen](docs/img/performer/live.png)
 
-> **X0X is in beta.** It's solid for everyday playing, but a very busy pattern can push the FM-1
-> to its limit. When that happens, X0X trades a little sound quality to keep playing rather than
-> drop out. Installing it is at your own risk, though it's hard to get stuck: the web installer
-> can put M-VAVE's firmware back, an FM-1 that keeps crashing starts in a safe mode, and the
-> manual's Troubleshooting section covers the rest.
+## What you can play
 
-## What's inside
+- **Two acid voices:** independent 303 synthesis, cutoff, resonance, envelope, decay, accent, waveform, drive, pan and effect sends.
+- **Generate and develop:** find a new phrase, explore related variations, LIKE an idea and RETURN to it. Musical undo restores notes and hits while keeping your current sound and mute choices.
+- **A Musical Director prototype:** keep 303 A as the lead and ask for a related response from B and a coordinated drum groove at the next four-bar boundary.
+- **909 and 808 drums:** generate all eleven instrument parts. The starting mix brings in kicks and hats; unmute other instruments when you want them.
+- **Predictable drum controls:** move from Straight to Weird and Hollow to Full. Straight grooves range from a single kick with a generated crash on the first beat to four-on-the-floor kicks and sixteenth-note hats.
+- **Hands-on performance:** select several parts, turn linked controls, mute or solo tracks and individual drums, and restore a previous mix.
+- **Effects:** independent 303 drive and sends, shared delay and reverb, master filtering and kick pump. Hold keys for temporary master low-pass, high-pass, pump or drive gestures.
 
-| Part | What it is | Based on |
-|---|---|---|
-| 909 | 11 voices: modelled kick, snare, toms, rim and clap, with sampled hats and cymbals | [9W9](https://github.com/athousanddetails/schwung-9W9) (samples from ER-99) |
-| 808 | 11 tracks, including the 808's tom/conga, rim/claves and clap/maracas switches | [8W8](https://github.com/athousanddetails/schwung-8W8) |
-| 303 A and B | Open303 with Devilfish-style ranges, each with a TB-3PO line generator | [schwung-303](https://github.com/charlesvestal/schwung-303), [schwung-tb3po](https://github.com/charlesvestal/schwung-tb3po) |
-| Break | A loop cut into eight slices and rearranged as it plays | [BB Gen](https://github.com/mestela/schwung-breakbeat) |
+The display shows your selected parts, current controls, four-bar position and pending Director action. Detailed step editing remains available when needed. Breakbeat playback is disabled in this build to make room for the live features.
 
-Each part has its own step length (up to 64 steps) and rate, so parts can drift against each
-other. Pattern changes wait for the end of the bar, and patterns can be chained.
+## Install
 
-X0X is a fork of [Felucca](https://github.com/hugelton/Felucca) by Leo Kuroshita (Hügelton
-Instruments). It keeps Felucca's foundations (the hardware layer, USB, the update loader, the web
-installer and the storage) and replaces the instrument on top.
+1. **Back up your current firmware's data first.** If you use Sloop, use the [Sloop editor](https://isod89.github.io/sloop-fm1/webapp/editor/). The [X0X backup page](https://copych.github.io/fm1-x0x/backup/) only handles X0X projects. Keep the firmware and restore instructions for your current setup.
+2. Connect the FM-1 with a USB data cable. Close other MIDI applications and editor tabs.
+3. Open the **[web installer](https://copych.github.io/fm1-x0x/install/)** in desktop Chrome or Edge. Allow MIDI / SysEx access when asked.
+4. Follow the device connection and installation steps. Keep USB connected until the update finishes and the instrument restarts.
+5. The firmware opens on the **LIVE** performer screen.
 
-## Your own breaks
+The installer checks device and package identity. If it cannot find your device, check its connection rather than bypassing those checks. Switching directly from every alternative firmware, including Sloop, is not yet verified. For recovery, see the [base manual](https://copych.github.io/fm1-x0x/manual/#recovering-an-fm-1-that-won-t-start).
 
-X0X doesn't ship with any recorded breaks, only two loops played by its own 909. You can load
-your own into the FM-1's three sample slots, which hold about nine one-bar loops in total.
-The [break loops page](https://charlesvestal.github.io/fm1-x0x/breaks/) does it from Chrome or
-Edge (drop the files, press Upload); from the command line:
+## Your first groove
 
-```
-tools/upload_breaks.py --bars amen.wav think.wav ...   # take one bar of each and upload them
-tools/upload_breaks.py --dry-run OUTDIR ...            # see what fits, without the FM-1
-```
+1. On the initial **303 A** selection, press **OCT+** to make a phrase, then **PLAY**.
+2. Tap **ARP** to ask the Director for a complementary B phrase and drums. During playback it applies at the next four-bar boundary; tap ARP again to cancel.
+3. Turn the four knobs for **cutoff, resonance, envelope modulation and decay**.
+4. Use the first four **black keys** to select **909 / 808 / 303 A / 303 B**. Hold **SEL** while selecting to link several parts.
+5. Select a drum kit and hold **ENV**: knobs 1 and 2 control **Weird** and **Full**. White keys select individual drum instruments.
 
-Recorded breaks belong to whoever made them and aren't covered by this project's licence.
+| Gesture in LIVE | Action |
+| --- | --- |
+| OCT+ / OCT- | New material / develop or vary selected material |
+| ENV + OCT+ / LFO + OCT- | LIKE / RETURN |
+| REC tap / REC + OCT+ | Musical undo / redo |
+| HOME + black key | Mute or unmute a part |
+| HOME + white key, drum kit selected | Mute or unmute a drum instrument |
+| REC + black or white key | Solo a part or drum instrument |
+| HOME + SEL | Restore the captured mix |
+| EDIT + knobs | Additional sound controls; on drums, instrument mix and sends |
+| LFO + knobs | Part level, pan, reverb send, delay send |
+| FX + knobs | Master filter, pump, delay feedback, reverb level |
+| FX + white 1–4, held | Temporary master low-pass / high-pass / pump / drive |
+| SELECT | Tempo |
+| SAVE | Save the project |
+| HOME + EDIT | Return to LIVE from the detailed editor or settings |
 
-## Building and testing
+Key numbers count white and black keys separately from the left. The [complete controls guide](https://copych.github.io/fm1-x0x/performance/) explains linked selection, solo, effect release and Director requirements.
 
-[BUILDING.md](BUILDING.md) explains the toolchain. In short:
+## What to expect from this version
 
-```
-tests/run_tests.sh      # the maths, the sequencer, every engine against its original, the app in a simulator
-./build.sh              # build/x0x.fwsc
-```
+The Director currently coordinates phrases; section queues such as BUILD, BREAK and DROP are still planned. Tape stop, chopper, audio beat repeat and per-drum DJ filtering are also planned. Current momentary effects act on the master mix.
 
-`host/x0x_host` runs the whole app on a computer from a script (`tests/scenarios/*.x0x`). Button
-presses, keys, knob turns and MIDI go in; audio and screenshots come out. That's how most of
-X0X is tested before it reaches the FM-1.
+LIKE captures musical patterns and generator settings, not synth patches or the mix. Captures, musical undo and manual mute states are session-only. SAVE keeps the project; it does not make those temporary performance memories persistent.
 
-## Licence and credits
+## About this fork
 
-X0X is GPL-3.0-only, like Felucca, 9W9, 8W8 and schwung-tb3po. Open303 (by Robin Schmidt) is
-MIT. BB Gen is ported from mestela's schwung-breakbeat with the author's permission. The 909's
-hi-hat, ride and crash samples come from ER-99 (Matthew Cieplak, GPL-3.0). The fonts are Barlow
-Semi Condensed and Terminus (SIL OFL 1.1).
+Based on [X0X by Charles Vestal](https://github.com/charlesvestal/fm1-x0x), built on [Felucca by Leo Kuroshita / Hügelton Instruments](https://github.com/hugelton/Felucca). The 303s use Open303; the drums derive from [9W9](https://github.com/athousanddetails/schwung-9W9) and [8W8](https://github.com/athousanddetails/schwung-8W8). The 909 hats and cymbals use ER-99 samples by Matthew Cieplak (GPL-3.0). Generators derive from [schwung-tb3po](https://github.com/charlesvestal/schwung-tb3po). Existing DSP, sample and font credits and licenses are retained in the source and base manual.
 
-The second core follows what keremimo's [Melodee](https://github.com/keremimo/melodee) found on the
-device (how to start it, the jobs done kept in a register), with zednaked's
-[Jangada](https://github.com/zednaked/jangada) measurements and mailbox layout.
+X0X is GPL-3.0-only; Open303 is MIT and the fonts are SIL OFL 1.1. See [LICENSE](LICENSE) and the source notices. FM-1 and Roland instrument names are trademarks of their owners; this project is independent of those companies.
 
-The 303's render in passes, the 909's sample voices past their end and the 808's metal bank by
-blocks are after [Optimist](https://github.com/w0ts/optimist) (henri), a fork of X0X: the same
-sound, bit for bit, for less of the CPU.
-
-Felucca's own assets that aren't under its GPL (the icon set, the panel photo and the Hügelton
-drum pack) aren't part of this fork.
-
-M-VAVE and FM-1 are trademarks of their owners. TR-808, TR-909 and TB-303 are Roland trademarks,
-used here only to describe what the parts are modelled on. X0X isn't affiliated with or endorsed
-by M-VAVE, Roland or Hügelton Instruments.
+For development and build instructions, see [BUILDING.md](BUILDING.md).
