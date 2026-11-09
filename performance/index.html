@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live5 performer interface · X0X</title>
+<meta name="description" content="Live5 performer interface for X0X, groovebox firmware for the M-VAVE FM-1.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Barlow+Semi+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+:root {
+  --ground: #f4f5f6; --sheet: #ffffff; --ink: #1c1f23; --muted: #5b626a; --rule: #d9dde1;
+  --accent: #a35a08; --code-bg: #eef0f2; --swatch-ring: rgba(0,0,0,.18);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #131518; --sheet: #1a1d21; --ink: #e6e8eb; --muted: #9aa1a9; --rule: #2d3137;
+    --accent: #f0a043; --code-bg: #24282d; --swatch-ring: rgba(255,255,255,.22);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #131518; --sheet: #1a1d21; --ink: #e6e8eb; --muted: #9aa1a9; --rule: #2d3137;
+  --accent: #f0a043; --code-bg: #24282d; --swatch-ring: rgba(255,255,255,.22);
+  color-scheme: dark;
+}
+body {
+  background: var(--ground); color: var(--ink); margin: 0;
+  font: 400 17px/1.6 "Barlow", "Helvetica Neue", Arial, sans-serif;
+  padding-inline: 16px; padding-block: 32px 64px;
+}
+main { max-width: 46rem; margin: 0 auto; }
+h1, h2, h3 { font-family: "Barlow Semi Condensed", "Barlow", "Arial Narrow", sans-serif; text-wrap: balance; line-height: 1.15; }
+h1 { font-size: 2.3rem; font-weight: 700; margin: 0 0 .3rem; letter-spacing: -.01em; }
+h2 { font-size: 1.55rem; font-weight: 600; margin: 3rem 0 .8rem; padding-top: 1rem; border-top: 1px solid var(--rule); }
+h2 .num { color: var(--accent); margin-right: .35em; font-variant-numeric: tabular-nums; }
+h3 { font-size: 1.2rem; font-weight: 600; margin: 2rem 0 .5rem; }
+p, li { max-width: 65ch; }
+p { margin: 0 0 1rem; }
+ul, ol { padding-left: 1.3rem; margin: 0 0 1rem; }
+li { margin: .2rem 0; }
+strong { font-weight: 600; }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+code, pre { font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace; font-size: .86em; }
+code { background: var(--code-bg); padding: .08em .35em; border-radius: 4px; }
+pre { background: var(--code-bg); padding: 14px 16px; border-radius: 8px; overflow-x: auto; line-height: 1.45; margin: 0 0 1.2rem; }
+pre code { background: none; padding: 0; font-size: inherit; }
+hr { display: none; }
+.table { overflow-x: auto; margin: 0 0 1.3rem; }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; vertical-align: top; padding: .45rem .7rem .45rem 0; border-bottom: 1px solid var(--rule); }
+th { font-family: "Barlow Semi Condensed", "Barlow", sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; font-size: .82rem; color: var(--muted); }
+td:first-child { white-space: nowrap; }
+.lede { color: var(--muted); margin-bottom: 1.6rem; }
+.status { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 16px; }
+.status p { margin: 0; }
+a.home { color: inherit; text-decoration: none; }
+main > a.home { display: inline-block; font: 700 1rem "Barlow Semi Condensed", "Barlow", sans-serif; letter-spacing: .03em; color: var(--muted); margin: 0 0 .4rem; }
+a.home:hover { color: var(--accent); }
+pre:focus-visible, .table:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+.skip { position: absolute; left: 16px; top: -100px; background: var(--sheet); color: var(--accent); padding: 8px 14px;
+        border: 2px solid var(--accent); border-radius: 8px; font-weight: 600; z-index: 10; }
+.skip:focus { top: 12px; }
+.callout { border-left: 3px solid var(--accent); background: var(--sheet); border-radius: 0 8px 8px 0; padding: 10px 16px; margin: 0 0 1.2rem; max-width: 65ch; }
+.callout p { margin: 0; }
+details { border: 1px solid var(--rule); border-radius: 8px; padding: 0 16px; margin: 0 0 1.2rem; }
+details > summary { cursor: pointer; padding: 10px 0; font-weight: 600; color: var(--muted); }
+details[open] > summary { margin-bottom: .4rem; }
+details > :last-child { margin-bottom: 1rem; }
+.swatch { display: inline-block; width: .7em; height: .7em; border-radius: 3px; margin-right: .4em; vertical-align: .02em; box-shadow: 0 0 0 1px var(--swatch-ring); }
+nav.contents ol { columns: 2 14rem; column-gap: 2rem; padding-left: 1.3rem; }
+.figs { display: flex; flex-wrap: wrap; gap: 20px; margin: .4rem 0 1.6rem; }
+figure { margin: 0; flex: 0 1 auto; }
+figure img { display: block; max-width: 100%; height: auto; border-radius: 10px; }
+figure.shot img { width: 300px; image-rendering: pixelated; box-shadow: 0 0 0 1px var(--rule); }
+figure.wide { flex-basis: 100%; }
+figure.wide img { width: 100%; }
+figcaption { color: var(--muted); font-size: .88rem; margin-top: .4rem; max-width: 300px; }
+figure.wide figcaption { max-width: none; }
+nav.contents li { break-inside: avoid; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<main id="content">
+<a class="home" href="../">X0X</a>
+<h1>Live5 performer interface</h1>
+<p>Live5 starts on <strong>LIVE</strong>, a single performance screen. It shows colored target selection/activity, four-bar phase, sixteenth-note progress, Director queue status, the selected instrument/role, and the four current knob values. This is the musical interface; the old PERF screen remains CPU diagnostics.</p>
+<div class="figs"><figure class="shot"><img src="img/performer/live.png" alt="LIVE sound controls" loading="lazy"><figcaption>LIVE sound controls</figcaption></figure><figure class="shot"><img src="img/performer/mix.png" alt="Linked part mixing" loading="lazy"><figcaption>Linked part mixing</figcaption></figure><figure class="shot"><img src="img/performer/drums.png" alt="Drum instrument controls" loading="lazy"><figcaption>Drum instrument controls</figcaption></figure></div>
+<h2 id="start-playing">Start playing</h2>
+<ol><li>Boot on 303 A. Press OCT+ for a phrase, then PLAY.</li><li>Tap ARP to ask the Director to coordinate B and the drum kit. While playing, it waits for the next four-bar boundary. Tap ARP again to cancel a pending plan.</li><li>The first four black keys select 909, 808, 303 A and 303 B. Select a drum kit and press OCT+ to generate it directly, or use the Director from a 303 for 909.</li></ol>
+<p>Director constraints remain: nonempty A, forward 16-step/sixteenth-note parts, automatic mutation off, no legacy song or pattern chain. The screen says DIRECTOR NOT READY if those conditions are not met. It does not invent sections or claim an autonomous song arranger has been implemented.</p>
+<h2 id="direct-controls">Direct controls</h2>
+<p>All key numbers below count white or black keys separately, from the left. Hold a modifier, press the target/key or turn a knob, then release the modifier.</p>
+<div class="table"><table><thead><tr><th>Control</th><th>Behavior in LIVE</th></tr></thead><tbody><tr><td>Black 1–4 / ALGORITHM</td><td>Select 909 / 808 / 303 A / 303 B. Selection never mutes or generates.</td></tr><tr><td>SEL + black 1–4</td><td>Toggle a target in the selection; at least one remains. The last selected member becomes knob focus.</td></tr><tr><td>White 1–11 on drums / PRESETS</td><td>Select the drum instrument. White keys audition it while stopped; during playback selection is silent.</td></tr><tr><td>White keys on a 303</td><td>Play temporary notes; selecting another target or leaving LIVE releases them. Black keys retain their selection role.</td></tr><tr><td>SELECT</td><td>Tempo. It never pages the LIVE screen.</td></tr><tr><td>PRESETS on a 303</td><td>Focused synth's waveform. Held EDIT also displays that value.</td></tr><tr><td>Knobs, no modifier: 303</td><td>Cutoff, resonance, envelope modulation, decay.</td></tr><tr><td>Knobs, no modifier: drums</td><td>Tuning, snappy/attack/tone (instrument-dependent), decay, drive. Missing native controls remain empty.</td></tr><tr><td>EDIT + knobs: 303</td><td>Accent, waveform, drive amount, drive type. Choose Soft/RAT to enable the 303 drive.</td></tr><tr><td>EDIT + knobs: drums</td><td>Instrument level, pan, reverb send, delay send.</td></tr><tr><td>EDIT + PRESETS on drums</td><td>Instrument distortion type.</td></tr><tr><td>LFO + knobs</td><td>Selected part level, pan, reverb send, delay send.</td></tr><tr><td>SEL + LFO + knobs</td><td>Drum-instrument level/pan/sends; on a 303, its part level/pan/sends.</td></tr><tr><td>ENV + knobs: 303</td><td>Density, accent chance, slide chance, octave range. These configure the generator; OCT+ or OCT- applies a musical action.</td></tr><tr><td>ENV + knobs: drums</td><td>Weird, Full, swing, accent velocity. Weird/Full regenerate through the existing mailbox.</td></tr><tr><td>FX + knobs</td><td>Master DJ filter, kick pump, delay feedback, reverb return level. These are explicitly master/shared-return controls.</td></tr><tr><td>PLAY</td><td>Start/stop.</td></tr><tr><td>SAVE</td><td>Save project. Runtime captures, musical undo and manual mutes are not newly made persistent.</td></tr></tbody></table></div>
+<p>For several selected 303s, sound controls move each selected instrument by the same relative delta, preserving differences until a parameter reaches a bound. Native/extra/composition controls only affect selected targets in the focused family (303s or drums). Part mixing affects all selected targets. Master controls apply once. Drum Weird/Full knobs affect the focused kit because that generator uses one outstanding request; OCT actions can compose both selected kits atomically. Encoder changes are relative, so changing target/layer cannot jump to an absolute knob position. Releasing a layer returns to native sound controls immediately.</p>
+<h2 id="mute-solo-and-restore">Mute, solo and restore</h2>
+<div class="table"><table><thead><tr><th>Gesture</th><th>Action</th></tr></thead><tbody><tr><td>HOME + black 1–4</td><td>Toggle part mute.</td></tr><tr><td>HOME + white 1–11, drums focused</td><td>Toggle that drum instrument. Remains available with FX held.</td></tr><tr><td>REC + black 1–4</td><td>Solo that part. Repeat the same solo to clear it.</td></tr><tr><td>REC + white 1–11, drums focused</td><td>Solo that drum instrument.</td></tr><tr><td>REC tap while soloing</td><td>Clear solo and restore the pre-solo mix.</td></tr><tr><td>HOME + SEL</td><td>Restore the mix captured before the first manual mute gesture; with no capture, explicitly unmute all.</td></tr></tbody></table></div>
+<p>Solo retains existing explicit manual mutes rather than silently unmuting their targets. A new solo replaces the old solo. A manual mute clears solo first, then applies the new manual choice. Leaving LIVE restores a temporary solo. Initial drum generation still follows live4's kick/hats starting mix and manual priority.</p>
+<h2 id="musical-operations">Musical operations</h2>
+<div class="table"><table><thead><tr><th>Gesture</th><th>Action</th></tr></thead><tbody><tr><td>OCT+</td><td>New material for selected targets.</td></tr><tr><td>OCT-</td><td>Develop selected 303 motifs; reseed selected drum grooves at their current coordinates. Straight standards intentionally remain recognizable.</td></tr><tr><td>ENV + OCT+</td><td>LIKE each selected member (independent per-member captures).</td></tr><tr><td>LFO + OCT-</td><td>RETURN all selected captures in one publication; refuses the action if any selected capture is missing.</td></tr><tr><td>REC tap</td><td>One-level musical undo, preserving later sound and mute changes. While a Director plan is queued, cancels it instead.</td></tr><tr><td>REC + OCT+ / HOME + PLAY</td><td>Musical redo.</td></tr><tr><td>HOME + REC</td><td>Alias for musical undo.</td></tr><tr><td>ARP</td><td>Director request; again cancels a pending Director plan.</td></tr></tbody></table></div>
+<p>New/develop/RETURN prepare fixed snapshots on main and apply them together at an audio-block boundary. A changed source or pattern switch cancels a stale plan. The one-level musical history covers these actions, drum-coordinate regeneration, and an applied Director ensemble. It contains notes/hits and generator settings, not patches, levels, sends, automation or mutes. New musical actions replace this one-level history. It resets on project initialization/reboot. The legacy editor retains its separate, broader undo/redo system.</p>
+<p>LIKE requests for several members use the existing one-slot capture service in sequence; wait for their acknowledgments before another composition request. RETURN is atomic across the selected members. The system refuses overlapping composition requests; it never waits for them in audio. Automatic 303 mutation must be off for these performer composition operations.</p>
+<h2 id="momentary-effects">Momentary effects</h2>
+<p>Hold <strong>FX + white 1 / 2 / 3 / 4</strong> for <strong>master low-pass / high-pass / pump / drive</strong> respectively. The screen names the master target and active gesture. The underlying project pots are retained; release restores the latest project values. Releasing FX, changing selection or leaving LIVE also restores the effect. A knob turn ends a temporary effect before applying the manual change.</p>
+<p>One momentary effect is active at a time; pressing another replaces it. Releasing the current effect returns to the live settings rather than resuming an older held gesture. Master filter restoration includes its exact mode, cutoff and resonance, preserving a custom underlying filter configuration.</p>
+<p><strong>Not implemented here:</strong> per-drum DJ filtering, per-target audio repeat/looper, chopper, tape stop and section/QUEUE behaviors. The UI does not provide fake controls for these missing DSP/Director features. Per-303 drive and sends are independent; the momentary gestures above target the master only.</p>
+<h2 id="editor-and-configuration-access">Editor and configuration access</h2>
+<p>SEQ opens detailed step editing. HOME opens the old pattern/song workspace. GLO opens configuration. <strong>Hold HOME and tap EDIT</strong> to return directly to LIVE from these screens. Entering LIVE clears recording and legacy song playback, releases keyboard-held notes and restores a temporary solo/effect on exit. Held EDIT, ENV, LFO and FX remain temporary layers in LIVE; tapping them does not open the old pages. REC is musical undo/solo here; recording remains in SEQ.</p>
+<p>In the browser, Shift-click a modifier to latch it, use the other control, then click the modifier again to release it. Refresh the emulator to load live5.</p>
+</main>
+<script>
+(() => {
+  const tables = [...document.querySelectorAll(".table")];
+  tables.forEach((t) => {
+    const th = t.querySelector("th");
+    t.setAttribute("aria-label", "Table" + (th ? ": " + th.textContent : ""));
+  });
+  const fit = () => tables.forEach((t) => {
+    if (t.scrollWidth > t.clientWidth + 1) { t.tabIndex = 0; t.setAttribute("role", "region"); }
+    else { t.removeAttribute("tabindex"); t.removeAttribute("role"); }
+  });
+  fit();
+  addEventListener("resize", fit);
+})();
+</script>
+</body>
+</html>
