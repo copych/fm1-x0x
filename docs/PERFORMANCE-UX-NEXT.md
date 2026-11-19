@@ -487,3 +487,61 @@ render has retired the old gesture; it invokes the actual restore function.
 The regression saves filter 64, moves to 54, activates temporary LP, restores,
 and asserts both the project mirror and actual engine return to 64 with no
 active/pending effect or roll. It passes. This test hook is absent on FM-1.
+
+## Live11 final build and validation results
+
+Final application source: `6e841fd` (main feature commit `a5b14ac`). Later changes
+are this build record only. Firmware built with the existing matched JieLi
+toolchain / AC79 SDK via `tools/build-fm1-wsl.sh --release 1.2.1-live11`.
+The final scoped regression command rebuilt host and matching WASM with
+`X0X_SKIP_EXTERNAL_REFS=1 X0X_VERSION=1.2.1-live11 tools/test-fm1-wsl.sh`.
+Exit status 0: all available tests passed, including all 46 supported application
+scenarios and all four emulator suites. The initial unrestricted run explicitly
+failed the three unavailable reference comparisons; those were not passed.
+
+- App: 446148 bytes.
+- Ordinary RAM: 96512 / 98304 (1792 free), +84 bytes from live10.
+- Pool: 331752 / 344064 (12312 free), 8192-byte reserve retained.
+- Package: `build/x0x-1.2.1-live11.fwsc`, 609682 bytes, FM-1_9010201.
+- SHA-256: `568972d708a42d8979b779a2b353a287a1492890f98efc2740eb28b6c98fb9ad`.
+- Final emulator: 542524-byte WASM; Emscripten 3.1.69.
+- Retained build checks: 909 call-free RAM-text instructions, no soft-double
+  routines, HAL-only register access and SDK/loader/package integrity checks.
+- Generated-code review: new unfiltered master entry calls the existing shared
+  stereo implementation; drum SVF/roll control are inlined into existing render
+  and event paths. Division and FPU instruction costs are not target-measured.
+- Final WASM/host match: 168021 samples, peak 0.261, maximum difference 3.05e-5
+  (16-bit WAV rounding), framebuffer and lights present.
+- Captured repeats: 1/8 10584, 1/16 5292, 1/32 2646 frames; maximum cycle error
+  1.19e-7, peaks 0.156 / 0.124 / 0.094. Tape reaches silence, chopper gates audio.
+- New live suite passed all cases described above, plus 808 target selection,
+  whole-kit mute/unmute, early roll cancellation and the restore-order case.
+- Native master/stereo/reverb, drum/hash, sequencer, generation/motif/director,
+  motion, MIDI, storage/backup, installer/OTA/update-loader checks passed.
+- Explicit skips: 3 absent external DSP references, 8 retired breakbeat scenarios,
+  optional TB3PO external comparison. Optional browser page voice remains absent.
+- Browser smoke: fresh isolated origin `127.0.0.1:8002` booted, generated/played,
+  entered FX, accepted roll/filter keyboard input, cycled to Compressor with the
+  correct four controls, and stopped. This is basic UI/AudioWorklet evidence;
+  precise timing/concurrency assertions come from the WASM suites. Original
+  emulator origin's saved project was not edited/reset. No listening verdict.
+- Thirteen actual WASM framebuffer captures generated with
+  `node tools/capture_live_screens.mjs`; new extra/compressor/roll views visually
+  reviewed. They are documentation, not hardware screen/legibility measurements.
+
+| Compliance category | Final status and evidence |
+| --- | --- |
+| Target / build / ABI | PASS for compile/link/package scope — matched compiler/SDK, retained build checks and identity above. |
+| Audio hot path / numerics | PASS for inspected bounded source and generated-helper checks; single-precision existing SVF/filter coefficients, no new allocation/I/O/log/wait/math-library dependencies. Device instruction cost/headroom UNVERIFIED. |
+| Execution ownership / synchronization | PASS for inspected queue/audio/worker structure and tested concurrency/release/restore scenarios. Existing bounded drop-on-full queue policy retained; stop/reset discard gestures. Extreme queue-pressure behavior remains UNVERIFIED. |
+| Memory / storage / I/O | PASS for static linker and buffer-bound scope, no new audio buffers/storage fields; peak stack and flash/I/O contention on device UNVERIFIED. |
+| Dependencies / includes / licenses | PASS — no new firmware dependencies; existing notices retained, screenshot utility uses Node built-ins. |
+| Compatibility / package / recovery | PASS for unchanged persistent contracts, host restore and loader/package checks. Physical install/rollback/recovery UNVERIFIED. |
+| Host functional validation | PASS for scoped suite above, with explicit unavailable/retired skips. Browser smoke is separate limited evidence. |
+| Hardware real-time validation | UNVERIFIED — no hardware flashed, timed or soaked; no physical audio/USB output or listening qualification. |
+
+Before hardware qualification, measure worst render/service cadence versus the
+11.61 ms half-buffer deadline with both kits, two driven 303s, high resonance,
+roll/filter plus repeat/FX tails, tempo extremes, busy UI/MIDI/USB; measure peak
+stack, queue pressure, underruns and clipping, listen for mode/release clicks,
+and verify stop/clock loss, save/restore and recovery on the actual FM-1.
