@@ -177,6 +177,13 @@ static void live_mix_cycle(int delta)
     if(next>=LIVE_MIX_CONTROLS_COUNT)next-=LIVE_MIX_CONTROLS_COUNT;
     live.mix_control=(uint8_t)next;
 }
+static void live_like(void)
+{
+    int p;
+    if(live.capture_mask){warn("CAPTURE BUSY",0);return;}
+    live.capture_mask=live.selected;live.capture_action=MOTIF_LIKE;
+    for(p=0;p<LIVE_TARGETS;++p)live.capture_pat[p]=seq.ppat[p];
+}
 static int live_button(int b)
 {
     if (b==B_EDIT || b==B_LFO || b==B_FX || b==B_ENV) {
@@ -201,7 +208,9 @@ static int live_button(int b)
         if(ui.btn & (1u<<B_SEL)) {
             ui.btn_used|=1u<<B_SEL; return 0; /* deliberate entry into the classic UI */
         }
-        say(b==B_SEQ?"SEL+SEQ: EDITOR":"SEL+GLO: SETUP",0);
+        if(b==B_SEQ)live_like();
+        else if(!engine_perform_request(PERFORM_RETURN,live.selected,0))warn("CAPTURE NOT READY",0);
+        else say("RETURNING",0);
         return 1;
     }
     if (b == B_PLAY && (ui.btn & (1u << B_HOME))) {
@@ -239,11 +248,7 @@ static int live_button(int b)
             if (!up) {
                 if (!engine_perform_request(PERFORM_RETURN,live.selected,0)) warn("CAPTURE NOT READY",0);
                 else say("RETURNING",0);
-            } else if (!live.capture_mask) {
-                int p;
-                live.capture_mask = live.selected; live.capture_action = up ? MOTIF_LIKE : MOTIF_RETURN;
-                for (p = 0; p < LIVE_TARGETS; ++p) live.capture_pat[p] = seq.ppat[p];
-            } else warn("CAPTURE BUSY",0);
+            } else live_like();
         } else if (engine_perform_request(up ? PERFORM_NEW : PERFORM_DEVELOP,live.selected,plat_ms() ^ ui.frame))
             say(up ? "NEW MATERIAL" : "DEVELOPING",0);
         else warn("COMPOSITION BUSY","OR AUTO MUTATE ON");

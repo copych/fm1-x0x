@@ -824,9 +824,9 @@ static uint8_t *page_of(int view)
 static enum eLiveLayer live_layer(void)
 {
     if (live.mode==LIVE_MIXER) return LIVE_MIX;
+    if (live.mode==LIVE_EFFECTS) return LIVE_MASTER;
     if (ui.btn & (1u << B_FX)) return LIVE_MASTER;
     if (ui.btn & (1u << B_EDIT)) return LIVE_EXTRA;
-    if (live.mode==LIVE_EFFECTS) return LIVE_MASTER;
     if (live.mode==LIVE_DIRECTOR) return LIVE_COMPOSE;
     if (live.mode==LIVE_AUTOMATION) return LIVE_SOUND;
     return live.extra ? LIVE_EXTRA : LIVE_SOUND;

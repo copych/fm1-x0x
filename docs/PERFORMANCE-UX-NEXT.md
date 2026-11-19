@@ -1,9 +1,12 @@
-# Live7 UX refinements — build only
+# Live7 / Live8 UX refinements — build only
 
 Source changes on top of released live6 (5031e10), prepared for 1.2.1-live7.
 Build results are recorded below. Tests were explicitly excluded by the user.
 Published firmware and the public browser emulator remain live6. This local
-live7 build contains the new behavior and has not been tested.
+live7 build contains the earlier behavior and has not been tested. Live8 adds
+the display follow-ups below and direct SEQ=LIKE / GLO=RETURN controls, retaining
+SEL+SEQ/GLO for classic editing/settings and the earlier capture combinations.
+Live8 is being built without tests by explicit user request.
 
 ## Performance is home
 
@@ -156,3 +159,46 @@ ownership review are recorded above; new DSP instruction cost, behavior, audible
 quality, navigation and hardware deadlines remain UNVERIFIED until tests are
 separately authorized. Storage formats, dependencies and licenses are unchanged;
 actual installation/recovery remains UNVERIFIED. Nothing was flashed.
+
+## Unbuilt follow-up: visible momentary filter position
+
+This source follow-up is not included in the compiled live7 artifacts above.
+No rebuild or tests were requested/run for it.
+
+Momentary FX now retains four left-to-right sliders (K1 filter, K2 pump,
+K3 delay feedback, K4 reverb level), even while a gesture is held. The filter
+is bipolar with a center mark at 64 and a 0–127 position readout. Filter and
+pump positions read the engine's actual pots, so temporary LP/HP/pump overrides
+are visible rather than displaying the unchanged saved project values.
+The header names a held gesture; the footer names the actual filter mode and
+whether a gesture is held. Releasing restores the underlying live readout.
+
+Source review: UI readback/drawing and latched-layer priority only; existing
+getter functions, fonts and canvas reused. No audio processing, queue protocol,
+persistent storage, dependency or loader changes. The loops stay bounded to
+four displayed controls. Target build/ABI, exact memory/stack, functional/browser
+behavior, package/recovery and hardware timing are UNVERIFIED for this follow-up.
+
+## Unbuilt follow-up: instrument sliders and numeric alignment
+
+Instrument controls now occupy four columns in physical K1–K4 order. Continuous
+303 and drum parameters use sliders scaled to their parameter descriptor's
+native range; named choices such as waveform retain text. Active automation
+values are shown when available. Mixer pan and individual drum pan use horizontal
+bipolar sliders with a center mark. Numeric readouts are right-aligned, including
+the BPM, bar counter and existing automation/director controls. The selected drum
+instrument remains named in the header. Fonts remain 20/24/36 px.
+
+This source-only change is not in the live7 firmware or emulator artifacts.
+No build or tests were run, following the user's instruction to ask first.
+
+| Compliance category | Status and evidence |
+| --- | --- |
+| Target / build / ABI | UNVERIFIED — no rebuild for this follow-up; live7 remains the compiled baseline. |
+| Audio hot path / numerics | PASS, source scope — changes are UI drawing only; no renderer or DSP changes. |
+| Execution ownership / synchronization | PASS, source scope — existing main-loop parameter getters and automation readback reused; bounded four-control loops. |
+| Memory / storage / I/O | UNVERIFIED — fixed local text buffers and existing canvas reused; target size and peak stack require a build/measurement. No storage or peripheral changes. |
+| Dependencies / includes / licenses | PASS, source scope — no dependencies, assets or includes added; existing notice retained. |
+| Compatibility / package / recovery | PASS for source scope — no persistent format, loader or package contract changed. Actual target package/recovery remains UNVERIFIED. |
+| Host functional validation | UNVERIFIED — no tests or browser exercise authorized for this follow-up. |
+| Hardware real-time validation | UNVERIFIED — no device validation; inspect display legibility, slider endpoints/center and UI responsiveness during playback after approval. |

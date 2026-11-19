@@ -24,6 +24,25 @@ static void live_text(int x,int y,int width,const felucca_font_t *font,const cha
     while(n && tw(font,b)>width) b[--n]=0;
     cv_text(x,y-offset,font,b,color);
 }
+static void live_value_right(int x,int y,int width,const felucca_font_t *font,const char *s,uint16_t color,int offset)
+{
+    char b[28];int n=0;
+    while(s[n] && n<27){b[n]=s[n];++n;}b[n]=0;
+    while(n && tw(font,b)>width)b[--n]=0;
+    cv_text(x+width-tw(font,b),y-offset,font,b,color);
+}
+static void live_pan_slider(int x,int y,int width,int value,uint16_t color,int offset)
+{
+    int center=x+(64*(width-1))/127,pos;
+    if(value<0)value=0;
+    if(value>127)value=127;
+    pos=x+value*(width-1)/127;
+    cv_rect(x,y-offset,width,4,C_LINE);
+    cv_rect(center,y-7-offset,1,18,C_GRAY);
+    if(pos<center)cv_rect(pos,y-offset,center-pos,4,color);
+    else cv_rect(center,y-offset,pos-center+1,4,color);
+    cv_rect(pos-2,y-5-offset,4,14,color);
+}
 static void draw_live_mix(int offset)
 {
     static const char *const names[LIVE_TARGETS]={"909","808","A","B"};
@@ -36,19 +55,77 @@ static void draw_live_mix(int offset)
         y=107+(127-value)*63/127;
         live_text(x+3,77,38,&FONT_P20,names[k],color,offset);
         if(part_muted(k))live_text(x+42,77,15,&FONT_P20,"M",C_AMB,offset);
-        cv_rect(x+27,107-offset,6,64,C_LINE);
         if(live.mix_control==LIVE_MIX_PAN) {
-            const int center=107+(127-64)*63/127;
-            cv_rect(x+15,center-offset,30,1,C_GRAY);
-            if(y<center)cv_rect(x+27,y-offset,6,center-y,color);
-            else cv_rect(x+27,center-offset,6,y-center+1,color);
+            live_pan_slider(x+6,137,48,value,color,offset);
             put_i(num,value-64);
         } else {
+            cv_rect(x+27,107-offset,6,64,C_LINE);
             cv_rect(x+27,y-offset,6,171-y,color);
+            cv_rect(x+18,y-2-offset,24,4,color);
             put_i(num,value);
         }
-        cv_rect(x+18,y-2-offset,24,4,color);
-        live_text(x+3,174,54,&FONT_P36,num,color,offset);
+        live_value_right(x+3,174,54,&FONT_P36,num,color,offset);
+    }
+}
+static const char *const LIVE_FX_NAME[LIVE_EFFECTS_COUNT]={"LOWPASS","HIGHPASS","PUMP","DRIVE","TAPE STOP","CHOPPER","REPEAT 1/8","REPEAT 1/16","REPEAT 1/32"};
+static void draw_live_fx(int offset)
+{
+    static const char *const labels[4]={"FILT","PUMP","FDBK","REV"};
+    int k;
+    for(k=0;k<4;++k) {
+        int x=k*60,value=k==0?engine_master_value(MST_DJF):k==1?engine_master_value(MST_PUMP):pref_get(live_ref(ui.part,k));
+        int y;char num[12];
+        if(value<0)value=0;
+        if(value>127)value=127;
+        y=107+(127-value)*63/127;
+        live_text(x+3,77,54,&FONT_P20,labels[k],C_GRAY,offset);
+        cv_rect(x+27,107-offset,6,64,C_LINE);
+        if(k==0) {
+            const int center=107+(127-64)*63/127;
+            cv_rect(x+15,center-offset,30,1,C_GRAY);
+            if(y<center)cv_rect(x+27,y-offset,6,center-y,C_HI);
+            else cv_rect(x+27,center-offset,6,y-center+1,C_HI);
+        } else cv_rect(x+27,y-offset,6,171-y,C_HI);
+        cv_rect(x+18,y-2-offset,24,4,C_WHITE);
+        put_i(num,value);
+        live_value_right(x+3,174,54,&FONT_P36,num,C_WHITE,offset);
+    }
+}
+static void draw_live_device(int offset)
+{
+    static const char *const bass_sound[4]={"CUT","RES","ENV","DEC"};
+    static const char *const bass_extra[4]={"ACC","WAVE","DRIVE","TYPE"};
+    static const char *const drum_sound[4]={"TUNE","CHAR","DEC","DRIVE"};
+    static const char *const drum_extra[4]={"LEV","PAN","REV","DLY"};
+    const char *const *labels=is_drum()?(live_layer()==LIVE_EXTRA?drum_extra:drum_sound):
+        (live_layer()==LIVE_EXTRA?bass_extra:bass_sound);
+    int k;
+    for(k=0;k<4;++k){
+        int x=k*60,value,applied,y;char num[28],unit[28];
+        pref_t r=live_ref(ui.part,k);
+        const x0x_param_t *d=pref_desc(r);
+        live_text(x+3,77,54,&FONT_P20,labels[k],C_GRAY,offset);
+        if(!d){live_value_right(x+3,174,54,&FONT_P20,"--",C_DIM,offset);continue;}
+        value=pref_get(r);
+        if(r.kind==R_ENG && (applied=engine_auto_value(r.a,r.b,r.c))>=0)value=applied;
+        if(value<0)value=0;
+        if(value>d->max)value=d->max;
+        if(d->names){
+            int n;pref_value(r,num,unit);
+            for(n=0;num[n];++n)if(num[n]>='a'&&num[n]<='z')num[n]-=32;
+            live_value_right(x+3,174,54,&FONT_P20,num,C_WHITE,offset);
+        }else{
+            if(is_drum() && live_layer()==LIVE_EXTRA && k==1){
+                live_pan_slider(x+6,137,48,value,part_col(),offset);put_i(num,value-64);
+            }else{
+                y=107+(d->max?((d->max-value)*63/d->max):63);
+                cv_rect(x+27,107-offset,6,64,C_LINE);
+                cv_rect(x+27,y-offset,6,171-y,part_col());
+                cv_rect(x+18,y-2-offset,24,4,C_WHITE);
+                put_i(num,value);
+            }
+            live_value_right(x+3,174,54,&FONT_P36,num,C_WHITE,offset);
+        }
     }
 }
 static void draw_live_surface(void)
@@ -60,6 +137,7 @@ static void draw_live_surface(void)
     const char *title=live.mode==LIVE_MIXER?LIVE_MIX_TITLE[live.mix_control]:live.mode==LIVE_EFFECTS?"MOMENT FX":
         live.mode==LIVE_AUTOMATION?(ui.part==PART_303A?"AUTO A":ui.part==PART_303B?"AUTO B":ui.part?"AUTO 808":"AUTO 909"):
         live.mode==LIVE_DIRECTOR?"DIRECTOR":PART_N[ui.part];
+    if(live.mode==LIVE_EFFECTS && live.fx_key>=0)title=LIVE_FX_NAME[live.fx_key];
     if(live.mode==LIVE_INSTRUMENT && is_drum()) {
         const char *voice=engine_voice_name(ui.part?T_808:T_909,ui.sel[ui.part]);
         char *q=put_s(instrument_title,ui.part?"808 ":"909 ");
@@ -74,9 +152,9 @@ static void draw_live_surface(void)
         cv_begin(240,120,C_BLACK);
         cv_rect(0,-offset,60,24,bpm_background);
         put_i(b,(int)seq_tempo(&seq));
-        live_text(6,0,48,&FONT_P20,b,bpm_background==C_BLACK?C_WHITE:C_BLACK,offset);
+        live_value_right(6,0,48,&FONT_P20,b,bpm_background==C_BLACK?C_WHITE:C_BLACK,offset);
         live_text(70,0,99,&FONT_P20,LIVE_SECTIONS[section%SECTIONS_COUNT],C_HI,offset);
-        put_i(put_s(put_i(b,bar),"/"),length); live_text(184,0,53,&FONT_P20,b,C_WHITE,offset);
+        put_i(put_s(put_i(b,bar),"/"),length); live_value_right(184,0,53,&FONT_P20,b,C_WHITE,offset);
         for(k=0;k<length && k<32;++k) {
             int w=228/length; if(w<2)w=2;
             cv_rect(6+k*w,27-offset,w-2,3,k==bar-1?C_WHITE:k<bar-1?C_HI:C_LINE);
@@ -86,11 +164,11 @@ static void draw_live_surface(void)
         if(live.mode==LIVE_MIXER) {
             live_text(180,43,56,&FONT_P20,live.mix_kit?"808":"909",C_GRAY,offset);
             draw_live_mix(offset);
-        } else if(live.mode==LIVE_EFFECTS && live.fx_key>=0) {
-            static const char *const fx[LIVE_EFFECTS_COUNT]={"LOWPASS","HIGHPASS","PUMP","DRIVE","TAPE STOP","CHOPPER","REPEAT 1/8","REPEAT 1/16","REPEAT 1/32"};
-            live_text(6,73,220,&FONT_P24,fx[live.fx_key],C_AMB,offset);
-            live_text(6,118,220,&FONT_P20,"HELD / RELEASE",C_WHITE,offset);
-            live_text(6,159,220,&FONT_P20,"MASTER",C_GRAY,offset);
+        } else if(live.mode==LIVE_EFFECTS) {
+            live_text(164,43,72,&FONT_P20,"MASTER",C_GRAY,offset);
+            draw_live_fx(offset);
+        } else if(live.mode==LIVE_INSTRUMENT) {
+            draw_live_device(offset);
         } else for(k=0;k<4;++k) {
             int x=6+(k&1)*120,y=77+(k/2)*65,value;
             pref_t r=live_ref(ui.part,k);
@@ -116,10 +194,16 @@ static void draw_live_surface(void)
             }
             { char l[28]; int n=0; while(label[n] && n<27) { l[n]=label[n]>='a'&&label[n]<='z'?label[n]-32:label[n]; ++n; } l[n]=0;
                 live_text(x,y,110,&FONT_P20,l,C_GRAY,offset); }
-            live_text(x,y+23,110,&FONT_P36,num,C_WHITE,offset);
+            live_value_right(x,y+23,110,&FONT_P36,num,C_WHITE,offset);
         }
         cv_rect(6,212-offset,228,1,C_LINE);
         if((int32_t)(ui.msg_until-plat_ms())>0) live_text(6,216,228,&FONT_P20,ui.msg,C_AMB,offset);
+        else if(live.mode==LIVE_EFFECTS) {
+            static const char *const mode[4]={"BYPASS","LOWPASS","BANDPASS","HIGHPASS"};
+            int filter_mode=engine_master_value(MST_MODE);
+            live_text(6,216,140,&FONT_P20,mode[(unsigned)filter_mode<4u?filter_mode:0],C_HI,offset);
+            live_text(164,216,72,&FONT_P20,live.fx_key>=0?"HELD":"LIVE",C_GRAY,offset);
+        }
         else if(live.mode==LIVE_AUTOMATION) {
             pref_t r=live_ref(ui.part,live.auto_parameter);
             int value=r.kind==R_ENG?engine_auto_value(r.a,r.b,r.c):-1;

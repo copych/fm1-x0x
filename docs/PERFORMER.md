@@ -1,6 +1,6 @@
-# Live7 performer interface
+# Live8 performer interface
 
-Live7 starts on LIVE: one performance surface with latched sections. Select a
+Live8 starts on LIVE: one performance surface with latched sections. Select a
 section, release its button, then use the knobs and musical keys. No pagination.
 All LIVE display text is at least 20 px: labels/status 20, heading 24, values 36.
 The detailed legacy editor keeps its original layout and fonts.
@@ -20,6 +20,8 @@ Key numbers below count white or black keys separately, from the left.
 ## Instrument
 
 The four 303 knobs control cutoff, resonance, envelope modulation and decay.
+Continuous instrument controls use sliders in K1–K4 order; numbers are
+right-aligned. Named choices such as waveform remain text.
 Tap EDIT again for accent, waveform, drive and drive type; again returns to the
 native controls. Independent patches and levels remain independent.
 
@@ -38,8 +40,9 @@ Tap LFO for Mixer Level. Further LFO taps cycle Level, Pan, Reverb and Delay,
 then wrap to Level. SELECT cycles these views in either direction. HOME + SELECT
 changes tempo in Mixer; SELECT elsewhere in LIVE remains tempo.
 
-Each view contains four vertical sliders, left-to-right: K1=909, K2=808,
-K3=303 A, K4=303 B. Pan has a center mark. M indicates a muted part.
+Each view contains four sliders, left-to-right: K1=909, K2=808,
+K3=303 A, K4=303 B. Pan sliders are horizontal with a center mark; other mixer
+sliders are vertical. M indicates a muted part.
 Black keys 1–4 directly toggle parts; white keys 1–11 toggle instruments in the
 focused kit. PRESETS switches that kit between 909 and 808.
 
@@ -150,8 +153,9 @@ short performance capture. Breakbeat playback remains disabled.
 
 ## Musical memory and saving
 
-OCT+ makes new material; OCT- develops 303s or varies drums. ENV + OCT+ captures
-LIKE; LFO + OCT- RETURN restores selected captures. REC tap is one-level musical
+OCT+ makes new material; OCT- develops 303s or varies drums. SEQ captures LIKE;
+GLO restores selected captures (RETURN). ENV + OCT+ and LFO + OCT- remain
+alternative LIKE/RETURN gestures. REC tap is one-level musical
 undo; REC + OCT+ redo. Undo preserves your later sound/mix changes. New musical
 actions replace the previous history entry.
 
@@ -163,6 +167,6 @@ return gesture.
 
 ## Validation and limits
 
-This build has not been tested. See [Live7 build notes](PERFORMANCE-UX-NEXT.md).
+This build has not been tested. See [build notes](PERFORMANCE-UX-NEXT.md).
 Hardware timing, stack use, physical controls and device installation/recovery
 remain unverified. A browser emulator does not qualify the hardware build.
