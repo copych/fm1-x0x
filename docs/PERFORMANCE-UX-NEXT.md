@@ -6,7 +6,7 @@ Published firmware and the public browser emulator remain live6. This local
 live7 build contains the earlier behavior and has not been tested. Live8 adds
 the display follow-ups below and direct SEQ=LIKE / GLO=RETURN controls, retaining
 SEL+SEQ/GLO for classic editing/settings and the earlier capture combinations.
-Live8 is being built without tests by explicit user request.
+Live8 is built without tests by explicit user request; results follow below.
 
 ## Performance is home
 
@@ -202,3 +202,38 @@ No build or tests were run, following the user's instruction to ask first.
 | Compatibility / package / recovery | PASS for source scope — no persistent format, loader or package contract changed. Actual target package/recovery remains UNVERIFIED. |
 | Host functional validation | UNVERIFIED — no tests or browser exercise authorized for this follow-up. |
 | Hardware real-time validation | UNVERIFIED — no device validation; inspect display legibility, slider endpoints/center and UI responsiveness during playback after approval. |
+
+## Live8 build results — no tests run
+
+Firmware/emulator source checkpoint: `1fa8670`. This build includes both formerly
+unbuilt display follow-ups and the SEQ=LIKE / GLO=RETURN remap. The existing
+ENV+OCT+ and LFO+OCT- gestures still work. SEL+SEQ/GLO retain classic access.
+The LIKE helper reuses the existing main-loop capture mask, selected-part mask
+and bounded four-part pattern snapshot; RETURN uses the existing perform queue.
+No new audio/DSP logic, persistent fields, dependencies or buffer allocations.
+
+Commands: `tools/build-fm1-wsl.sh --release 1.2.1-live8`, followed by
+`X0X_VERSION=1.2.1-live8 tools/build-emu-wsl.sh`, using the existing matched
+JieLi toolchain/AC79 SDK and Emscripten 3.1.69.
+
+- Target application: 441720 bytes.
+- Ordinary RAM: 96428 / 98304 bytes (1876 free).
+- Pool: 331752 / 344064 bytes (12312 free, 8192-byte reserve retained).
+- Firmware: `build/x0x-1.2.1-live8.fwsc`, 609682 bytes, FM-1_9010201.
+- SHA-256: `00a080d01d89e30df8dd80921b689522505b91815e531c2ead0fd4fc1631834f`.
+- Matching emulator: 531667-byte WASM. Optional page voice absent; existing
+  screen-reader support remains available.
+- Build integrity checks: 909 call-free RAM-text instructions, no software-double
+  routines, HAL-only register access; retained SDK/loader/package checks passed.
+
+Compliance supersedes the unbuilt statuses above: target/build/ABI PASS for
+compilation/link/package scope only; audio hot path/numerics and execution
+ownership PASS for the unchanged DSP and bounded UI/capture source scope;
+memory PASS for static linker budgets, peak stack UNVERIFIED; dependencies and
+licenses PASS (none added); compatibility PASS for unchanged formats/contracts,
+physical installation/recovery UNVERIFIED. Host functional/browser/listening
+validation and hardware real-time validation remain UNVERIFIED. No tests were
+run, no emulator runtime behavior was exercised, and no hardware was flashed.
+After test approval, validate four-column controls, numeric alignment, pan
+center/endpoints, held filter readback, direct LIKE/RETURN and retained modifier
+gestures, plus the earlier live7 navigation/automation/FX scenarios above.
