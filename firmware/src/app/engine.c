@@ -305,6 +305,7 @@ static float mix_pl[NPARTS] = {1, 1, 1, 1, 1}, mix_pr[NPARTS] = {1, 1, 1, 1, 1};
 /* uint32 commands, single producer (main loop) / single consumer (audio ISR):
  * type:4 | a:8 | b:8 | c:12 */
 enum { C_PARAM_T0 = 0, C_DRUM = 8, C_BON, C_BOFF, C_BRK, C_NOP, C_LIVE_AUTO, C_LIVE_FORM, C_LIVE_FX };
+enum eLiveFxCommand { LIVE_FX_CMD_MOMENTARY=253, LIVE_FX_CMD_ROLL, LIVE_FX_CMD_RESET, LIVE_FX_COMMANDS_END };
 #define CQ 1024u
 static uint32_t cq[CQ];
 static volatile uint32_t cq_w, cq_r;
@@ -573,8 +574,10 @@ static int prob_skip(int part, int v)                 /* ISR: 1 = this hit does 
     return prob_rng % 100u >= p;
 }
 static void s_drum(void *x, int kit, int v, float vel);
+static int snare_replaces(int kit,int voice);
 static int s_drum_seq(void *x, int kit, int v, float vel)
 {
+    if(snare_replaces(kit,v))return 0;
     if (!live_section_allows(kit,v) || prob_skip(kit, v))
         return 0;
     if(form.section==SECTION_BUILD)vel*=0.65f+0.35f*(float)(form.bar+1)/(float)form.length;
@@ -595,6 +598,15 @@ static void s_drum(void *x, int kit, int v, float vel)
     else                                 /* the 808's unaccented hit sits at D8_VEL_NORMAL, not at our 909 level */
         drum808_trigger(&d808, v, vel >= 0.999f ? 1.0f : vel * (D8_VEL_NORMAL / (88.0f / 127.0f)));
 }
+#include "live_drums.h"
+#include "live_quantized_fx.h"
+#if defined(X0X_WEB)
+int engine_test_roll(int field)
+{return field==0?snare_roll.active:field==1?snare_roll.armed:field==2?(int)snare_test_hits:snare_roll.kit;}
+float engine_test_chop_phase(void){return audio_gesture.chop_phase;}
+#endif
+static int snare_replaces(int kit,int voice)
+{return snare_roll.active && snare_roll.kit==kit && voice==1;}
 static void s_bon(void *x, int p, int note, int acc, int sl)
 {
     (void)x;
@@ -637,6 +649,10 @@ static void s_step(void *x, int t, int p)
 {
     (void)x;
     if (t == TRK_DRUM) {
+        if(engine_live_clock_ready()){
+            momentary_front();
+            if(!seq.ext)snare_front(p);
+        }
         int boundary=live_runtime_step(p);
         live_runtime_tick(0);
         if (p==0 && boundary) director_apply();
@@ -1000,7 +1016,11 @@ static void drain(void)
             apply_param((int)type, (int)a, (int)b, (int)v);
         } else if (type==C_LIVE_AUTO || type==C_LIVE_FORM)
             live_runtime_command(a,b,v,type==C_LIVE_FORM);
-        else if(type==C_LIVE_FX) { if(a==255)live_audio_reset();else live_audio_command((int)a-1); }
+        else if(type==C_LIVE_FX) {
+            if(a==LIVE_FX_CMD_RESET){momentary_release();live_audio_reset();live_drums_reset();}
+            else if(a==LIVE_FX_CMD_ROLL)snare_command(b,v);
+            else if(a==LIVE_FX_CMD_MOMENTARY)momentary_command((int)v-1);
+        }
         else if (type == C_DRUM)
             s_drum(0, (int)a, (int)b, (float)v / 4095.0f);
         else if (type == C_BON && a < NBASS)
@@ -1210,6 +1230,7 @@ static void render_sub(float *out_l, float *out_r, uint32_t n)
             t0[i] = (t0[i] + tr[i]) * 0.5f;
         kit_sends(PART_808, t0, n);
     }
+    drum_filter_process(dry_l,dry_r,rev,dly,n);
     for (b = 0; b < NBASS; b++) {
         int p = PART_303A + b;
         if (idle[b])
@@ -1265,14 +1286,35 @@ void engine_render(int32_t *out_lr, uint32_t n)
         live_runtime_tick(n);
         fxbus_set_bpm(&fx, seq_tempo(&seq));
         seq_advance(&seq, 0, &SINK);
+        snare_schedule_midpoint();
         PROF_ADD(7, pt);
     }
     while (done < n) {
         uint32_t k = seq_until_event(&seq, n - done);
+        if(!seq.playing || !engine_live_clock_ready())momentary_release();
+        if(!seq.playing || seq.ext || !engine_live_clock_ready()){
+            snare_roll.active=snare_roll.armed=snare_roll.mid_pending=0;snare_roll.remaining=0;
+        }
+        if(snare_roll.active && snare_roll.remaining){
+            uint32_t until=(snare_roll.remaining+255u)>>8;
+            if(k>until)k=until;
+        }
         render_sub(out_l + done, out_r + done, k);
+        {
+            PROF_T(pm);
+            master_process_st_unfiltered(&mst,out_l+done,out_r+done,(int)k,vol);
+            live_audio_process(out_l+done,out_r+done,k);
+            PROF_ADD(6,pm);
+        }
+        if(snare_roll.active && snare_roll.remaining){
+            uint32_t consumed=k<<8;
+            if(consumed>=snare_roll.remaining){snare_roll.remaining=0;snare_hit();}
+            else snare_roll.remaining-=consumed;
+        }
         {
             PROF_T(pt);
             seq_advance(&seq, k, &SINK);
+            snare_schedule_midpoint();
             PROF_ADD(7, pt);
         }
         done += k;
@@ -1280,12 +1322,6 @@ void engine_render(int32_t *out_lr, uint32_t n)
     if (mot_playing && !seq.playing)                     /* stopped: every knob back to its own value */
         motion_release(&mot);
     mot_playing = seq.playing;
-    {
-        PROF_T(pt);
-        master_process_st(&mst, out_l, out_r, (int)n, vol);
-        live_audio_process(out_l,out_r,n);
-        PROF_ADD(6, pt);
-    }
     for (i = 0; i < n; i++) {
         float l = out_l[i], r = out_r[i];            /* (out_scale: NORMAL 2^22, Felucca's; LOUD 2^23) */
         l = l > out_lim ? out_lim : l < -out_lim ? -out_lim : l;
@@ -1504,6 +1540,7 @@ void engine_init(pattern_t *patterns, song_t *song, lane_t *lanes, const sound_t
     form.section=SECTION_GROOVE; form.pending=-1; form.length=4;
     form.bar=form.started=form.was_playing=0; form.step=form.elapsed=0;
     live_audio_reset();
+    live_drums_reset();momentary.pending=momentary.active=LIVE_FX_NONE;
     for (p = 0; p < NPARTS; p++) {
         mix_level[p] = 1.0f;
         mix_rev[p] = mix_dly[p] = 0.0f;

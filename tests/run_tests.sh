@@ -58,6 +58,10 @@ run stereo sh -c "$CC -O2 -ffp-contract=off -w -Ifirmware/src/dsp -Ifirmware/src
 run reverb sh -c "$CC $W -Wno-double-promotion -Ifirmware/src/dsp -Ifirmware/src -Ibuild/gen -o $OUT/reverb_test tests/host/reverb_test.c -lm && $OUT/reverb_test"
 run master sh -c "$CC $W -Wno-double-promotion -o $OUT/master_test tests/host/master_test.c firmware/src/dsp/master.c -lm && $OUT/master_test"
 for t in drum909 drum808 bass303 breaks; do
+    if [ "${X0X_SKIP_EXTERNAL_REFS:-0}" = 1 ] && [ "$t" != breaks ]; then
+        echo "  skip $t (external reference comparison explicitly excluded)"
+        continue
+    fi
     [ -f "tests/host/run_$t.sh" ] && run "$t" sh "tests/host/run_$t.sh"
 done
 run storage sh -c "$CC -O2 -o $OUT/storage_test tests/storage_test.c && $OUT/storage_test"
@@ -110,10 +114,11 @@ run midicc sh -c "$CC -O2 -ffp-contract=off -std=c99 -Wall -Wextra -Wno-unused-f
     -Ifirmware/src -Ifirmware/src/dsp -Ibuild/gen -o $OUT/midicc_test tests/host/midicc_test.c $ENG_U -lm && $OUT/midicc_test"
 if command -v emcc >/dev/null 2>&1 && command -v node >/dev/null 2>&1; then   # the browser build, when it can be built
     printf 'wav emu_ref.wav\ntap SEQ\nturn ALGO -2\nwait 260\ntapkey b0\ntapkey w0\ntapkey w8\ntap PLAY\nwait 2960\nwavstop\n' > build/host/emu_ref.x0x
-    run emu sh -c "sh web/emu/build.sh >/dev/null 2>&1 && build/host/x0x_host build/host/emu_ref.x0x build/host >/dev/null && \
+    run emu sh -c "sh web/emu/build.sh && build/host/x0x_host build/host/emu_ref.x0x build/host >/dev/null && \
         node tests/host/emu_test.mjs build/emu/x0x.wasm build/host/emu_ref.wav"
     run emu-slots node tests/host/emu_slots_test.mjs build/emu/x0x.wasm build/test_loops/loop1.wav
     run emu-performer node tests/host/emu_performer_test.mjs build/emu/x0x.wasm
+    run emu-live-drums node tests/host/emu_live_drums_test.mjs build/emu/x0x.wasm
 fi
 for s in tests/scenarios/*.x0x; do
     n=$(basename "$s" .x0x)

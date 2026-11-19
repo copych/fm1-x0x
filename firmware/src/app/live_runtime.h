@@ -18,7 +18,7 @@ int engine_live_clock_ready(void)
         seq.pat[seq.ppat[TRK_DRUM]].drum[0].len==16 &&
         seq.pat[seq.ppat[TRK_DRUM]].drum[0].rate==RATE_16;
 }
-void engine_live_reset(void) { cq_put(C_LIVE_FORM,2,0,0); cq_put(C_LIVE_FX,255,0,0); }
+void engine_live_reset(void) { cq_put(C_LIVE_FORM,2,0,0); cq_put(C_LIVE_FX,LIVE_FX_CMD_RESET,0,0); }
 
 void engine_auto_start(int t, int v, int i, int shape, int depth, int bars)
 {

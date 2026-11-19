@@ -280,9 +280,9 @@ static inline float soft_ceiling(float s)
     return s;
 }
 
-void master_process_st(master_t *m, float *xl, float *xr, int n, float volume)
+static void master_process_st_impl(master_t *m, float *xl, float *xr, int n, float volume, int filter)
 {
-    int i, mode = m->pot[MST_MODE];
+    int i, mode = filter ? m->pot[MST_MODE] : 0;
     float k = m->k, grmax = 0.0f, vc = m->vol_cur < 0.0f ? volume : m->vol_cur;
     for (i = 0; i < n; i++) {
         float s = xl[i], sr = xr[i];
@@ -390,6 +390,11 @@ void master_process_st(master_t *m, float *xl, float *xr, int n, float volume)
     m->vol_cur = vc;
     m->gr_view = grmax > m->gr_view ? grmax : m->gr_view * 0.93f;   /* the meter: peak, falling */
 }
+
+void master_process_st(master_t *m,float *l,float *r,int n,float volume)
+{master_process_st_impl(m,l,r,n,volume,1);}
+void master_process_st_unfiltered(master_t *m,float *l,float *r,int n,float volume)
+{master_process_st_impl(m,l,r,n,volume,0);}
 
 static void put_num(char *b, float v, int decimals, const char *unit)
 {

@@ -15,7 +15,9 @@ tapkey b0
 release HOME
 expect vmute 2050
 # the 909's part mute on HOME and back: the track mutes stay
+press SEL
 tap HOME
+release SEL
 tapkey b0
 tapkey b0
 expect vmute 2050

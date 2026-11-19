@@ -1,6 +1,6 @@
-# Live10 performer interface
+# Live11 performer interface
 
-Live10 starts on LIVE: one performance surface with latched sections. Select a
+Live11 starts on LIVE: one performance surface with latched sections. Select a
 section, release its button, then use the knobs and musical keys. No pagination.
 All LIVE display text is at least 20 px: labels/status 20, heading 24, values 36.
 The detailed legacy editor keeps its original layout and fonts.
@@ -159,10 +159,31 @@ use Comp Detail for individual adjustments afterward.
 | 3 / 4 | Kick pump / drive |
 | 5 / 6 | Tape stop / chopper |
 | 7 / 8 / 9 | Captured audio repeat at 1/8 / 1/16 / 1/32 |
+| 10 / 11 / 12 | Snare roll at 1/8 / 1/16 / 1/32 |
 
-One momentary effect is active at a time. Changing section/target or turning a
-knob releases it. The gestures currently target the master mix; per-target repeat
-and drum-only DJ filtering are not yet provided.
+Effect presses wait for the next 909 sixteenth-note event. WAIT indicates a
+pending effect; releasing before it starts cancels it. Chopper passes attacks
+and silences tails, relocking its open edge to each sixteenth. Release remains
+immediate with the existing short wet fade, rather than waiting for a grid line.
+Keep the normal 909 16-step/sixteenth clock running for these gestures.
+
+The DJ filter now affects both drum kits and their new delay/reverb sends.
+303s and already sounding delay/reverb tails bypass it. Master compression,
+pump, drive, tape stop, chopper and repeats still affect the full mix.
+
+One regular momentary effect and one snare roll can run together. Hold a roll
+key while turning K1 filter, or hold a low/high-pass key as well. Releasing one
+does not stop the other. Turning a knob releases the regular held effect;
+K1 takes over the audible filter position while the roll continues.
+
+Rolls use the last focused 909/808 kit's current snare sound. The heading names
+the kit while rolling. They temporarily audition the snare even if its pattern
+voice is muted, but a whole-kit mute silences them. Pattern notes and mute states
+are not changed. Normal sequenced snare hits are suppressed during the roll to
+avoid doubled hits. Release stops retriggering and lets the last snare decay.
+Roll fronts follow the grid (eighth rolls start on alternate sixteenths); 1/32
+adds a hit midway through each actual step interval, including swing.
+Rolls currently require internal clock; stop or leaving FX cancels them.
 
 Repeats capture the real stereo sound after the master processing. Audio capture
 holds 16384 frames (about 371 ms at 44.1 kHz); very slow repeat lengths are capped
@@ -193,6 +214,6 @@ return gesture.
 
 ## Validation and limits
 
-This build has not been tested. See [build notes](PERFORMANCE-UX-NEXT.md).
+See [build and validation notes](PERFORMANCE-UX-NEXT.md) for the exact checks.
 Hardware timing, stack use, physical controls and device installation/recovery
 remain unverified. A browser emulator does not qualify the hardware build.

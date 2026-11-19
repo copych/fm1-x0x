@@ -2,7 +2,9 @@
 # or with REC on, it plays. ALWAYS plays it every time.
 wait 300
 # only the (empty) 909 heard: mute 303A, 303B and the break on HOME
+press SEL
 tap HOME
+release SEL
 tapkey b2
 tapkey b3
 tapkey b4

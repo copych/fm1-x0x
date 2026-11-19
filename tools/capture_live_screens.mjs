@@ -24,7 +24,8 @@ async function capture(name,actions){
   const tap=b=>{e.web_buttons(1<<b);wait(40);e.web_buttons(0);wait(60);};
   const key=k=>{e.web_keys(1<<k);wait(40);e.web_keys(0);wait(60);};
   const turn=(k,d)=>{e.web_enc(k,d);wait(80);};
-  wait(400);actions({tap,key,turn});wait(2200);
+  const hold=mask=>{e.web_keys(mask);wait(40);};
+  wait(400);actions({tap,key,turn,hold});wait(2200);
   fs.writeFileSync(path.join(output,name+'.png'),png(new Uint16Array(mem.buffer,e.web_fb(),240*240)));
   console.log('Captured '+name);
 }
@@ -37,3 +38,7 @@ await capture('director',({tap})=>tap(8));
 await capture('fx',({tap})=>tap(0));
 await capture('delay',({tap})=>{tap(0);tap(0);});
 await capture('reverb',({tap})=>{tap(0);tap(0);tap(0);});
+await capture('303-extra',({tap})=>tap(4));
+await capture('compressor',({tap})=>{tap(0);tap(0);tap(0);tap(0);});
+await capture('comp-detail',({tap})=>{tap(0);tap(0);tap(0);tap(0);tap(0);});
+await capture('roll',({tap,hold})=>{tap(13);tap(10);tap(0);hold((1<<18)|1);});

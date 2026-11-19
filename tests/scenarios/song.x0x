@@ -19,13 +19,17 @@ expect ppat0 1
 expect ppat3 1
 wait 1000
 shot s01_303a_on_p2.png
+press SEL
 tap HOME
+release SEL
 shot s02_home_parts.png
 # a HOME white key: all five parts
 tapkey w0
 expect ppat2 1
 # SONG (HOME again): white keys write bars 1, 2, 1
+press SEL
 tap HOME
+release SEL
 expect view 6
 tapkey w0
 tapkey w1
@@ -64,7 +68,9 @@ expect mute 0
 tap PLAY
 expect songon 1
 # motion: 303 A's cutoff, swept while recording, one turn a step (16 steps of 125 ms)
+press SEL
 tap HOME
+release SEL
 expect songon 0
 tap EDIT
 expect part 2

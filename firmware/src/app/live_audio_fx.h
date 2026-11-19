@@ -11,7 +11,7 @@ static struct {
     float wet,speed,tape,chop_phase,chop_gain,previous[2];
 } audio_gesture;
 void engine_audio_gesture(int effect)
-{ if(effect>=-1 && effect<GESTURES_COUNT)cq_put(C_LIVE_FX,(uint32_t)(effect+1),0,0); }
+{ if(effect>=-1 && effect<GESTURES_COUNT)engine_momentary(effect<0?-1:LIVE_FX_TAPE+effect); }
 static void live_audio_reset(void)
 {
     audio_gesture.write=audio_gesture.filled=audio_gesture.read=0;

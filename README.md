@@ -5,12 +5,12 @@ bassline, keep an idea you like, develop it, bring in drums and direct the next
 break or drop. Two independent 303s, 909 and 808 drums, hands-on sound controls
 and performance effects share one LIVE interface.
 
-**Current version: 1.2.1-live10 · experimental.** Hardware validation is pending.
+**Current version: 1.2.1-live11 · experimental.** Hardware validation is pending.
 
 **[Play in your browser](https://copych.github.io/fm1-x0x/emu/)** ·
 **[Install on FM-1](https://copych.github.io/fm1-x0x/install/)** ·
 **[Full controls guide](https://copych.github.io/fm1-x0x/performance/)** ·
-**[Download firmware](https://copych.github.io/fm1-x0x/firmware/x0x-1.2.1-live10.fwsc)**
+**[Download firmware](https://copych.github.io/fm1-x0x/firmware/x0x-1.2.1-live11.fwsc)**
 
 ## What it does
 
@@ -28,7 +28,7 @@ and performance effects share one LIVE interface.
   restoration. Four controls always follow the physical K1–K4 order.
 - **Shape movement and space.** Bar-aligned modulation, growing and falling
   ramps; delay and reverb controls; momentary filters, pump, drive, tape stop,
-  sixteenth-note chopper and captured audio repeats.
+  sixteenth-note chopper, captured audio repeats and live snare rolls.
 
 ## Screens
 
@@ -47,6 +47,10 @@ right-aligned. Pan uses horizontal sliders.
 | Momentary FX | Delay | Reverb |
 | --- | --- | --- |
 | ![Momentary effects](docs/img/performer/fx.png) | ![Delay controls](docs/img/performer/delay.png) | ![Reverb controls](docs/img/performer/reverb.png) |
+
+| 303 extra controls | Compressor | Snare roll |
+| --- | --- | --- |
+| ![Combined Drive and transpose](docs/img/performer/303-extra.png) | ![Compressor controls](docs/img/performer/compressor.png) | ![Snare roll and drum filter](docs/img/performer/roll.png) |
 
 ## Install
 
@@ -107,6 +111,18 @@ mix; Comp Detail has threshold, ratio, makeup and kick pump. The amount macro
 changes threshold, ratio and makeup together; use Comp Detail afterward for
 individual adjustments.
 
+**Snare rolls:** hold white keys **10 / 11 / 12** in FX for **1/8 / 1/16 / 1/32**
+rolls on the last selected drum kit. Hold a roll while turning K1 DJ filter or
+holding a filter key. Releasing one does not stop the other. The DJ filter
+affects **909 and 808 drums**, including new FX sends; the 303s and existing
+delay/reverb tails stay outside it.
+
+**Beat-aligned effects:** effect presses wait for the next sixteenth-note event.
+Release before it starts to cancel. Chopper passes attacks and silences tails,
+with its open edge locked to each sixteenth. Rolls retrigger the current snare
+sound without editing the pattern; whole-kit mutes still win. Roll gestures
+require the internal clock and stop when transport stops.
+
 **Automation:** K2 sets depth from 0 to 127. White keys offer three depths each
 of modulation, growing and falling ramps; cycles are 1, 2, 4 or 8 bars. A four-bar
 ramp engaged in bar 3 joins the current phase and resets after bar 4. Turn the
@@ -123,7 +139,9 @@ not synth patches or the mix. Captures, musical undo, manual mutes, section
 position and automation are temporary performance state and do not survive a restart.
 Named scene presets and a persistent favorites library are not available yet.
 
-Performance audio effects currently act on the master mix. Repeat history is
+Tape stop, chopper, repeats, drive and pump act on the master mix; the DJ filter
+acts on the drums. Momentary starts require playback and the normal 909 16-step
+sixteenth-note reference. Repeat history is
 about 371 ms, so longer repeats are capped. Maximum delay is about 1.26 seconds.
 Breakbeat playback is disabled in this version. The Director is an early
 prototype; the firmware has not yet been validated on physical FM-1 hardware.

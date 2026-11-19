@@ -82,6 +82,15 @@ __attribute__((used, visibility("default"))) uint32_t web_cpu(void) { return cpu
 __attribute__((used, visibility("default"))) uint32_t web_breakbeat(void) { return X0X_BREAKBEAT; }
 /* Observable state for browser regressions; the same real UI/engine are driven. */
 __attribute__((used, visibility("default"))) int web_live_mode(void) { return live.mode; }
+__attribute__((used, visibility("default"))) int web_momentary(int pending) { return engine_momentary_state(pending); }
+__attribute__((used, visibility("default"))) int web_grid_step(void) { return eng_step[TRK_DRUM]; }
+__attribute__((used, visibility("default"))) int web_live_extra(void) { return live.extra; }
+__attribute__((used, visibility("default"))) int web_fx_view(void) { return live.fx_view; }
+__attribute__((used, visibility("default"))) int web_roll(int field) { return engine_test_roll(field); }
+__attribute__((used, visibility("default"))) float web_chop_phase(void) { return engine_test_chop_phase(); }
+__attribute__((used, visibility("default"))) int web_native_sound(int t,int v,int i) { return proj.sound.v[t][v][i]; }
+__attribute__((used, visibility("default"))) int web_drive_position(int part) { return live_drive_value(part); }
+__attribute__((used, visibility("default"))) int web_transpose(int part) { return proj.pat[seq.ppat[part+NKIT]].bass[part].transpose-24; }
 __attribute__((used, visibility("default"))) int web_section(int field) { return engine_section_value(field); }
 __attribute__((used, visibility("default"))) int web_auto_value(int t,int v,int i) { return engine_auto_value(t,v,i); }
 

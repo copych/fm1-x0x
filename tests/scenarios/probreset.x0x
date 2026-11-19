@@ -14,8 +14,9 @@ release SAVE
 tap GLO
 turn SELECT 1
 turn ALGO 1
+press SEL
 tap HOME
-tap HOME
+release SEL
 expect view 0
 tap PLAY
 wait 10000

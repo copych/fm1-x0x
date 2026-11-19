@@ -234,7 +234,8 @@ static void draw_live_surface(void)
             live_text(180,43,56,&FONT_P20,live.mix_kit?"808":"909",C_GRAY,offset);
             draw_live_mix(offset);
         } else if(live.mode==LIVE_EFFECTS) {
-            live_text(164,43,72,&FONT_P20,"MASTER",C_GRAY,offset);
+            live_text(164,43,72,&FONT_P20,live.roll_key>=0?(live.mix_kit?"808 SD":"909 SD"):
+                live.fx_view==LIVE_FX_GESTURES?"DRUM DJ":"GLOBAL",C_GRAY,offset);
             draw_live_fx(offset);
         } else if(live.mode==LIVE_INSTRUMENT) {
             draw_live_device(offset);
@@ -274,7 +275,10 @@ static void draw_live_surface(void)
             static const char *const mode[4]={"BYPASS","LOWPASS","BANDPASS","HIGHPASS"};
             int filter_mode=engine_master_value(MST_MODE);
             live_text(6,216,140,&FONT_P20,mode[(unsigned)filter_mode<4u?filter_mode:0],C_HI,offset);
-            live_text(164,216,72,&FONT_P20,live.fx_key>=0?"HELD":"LIVE",C_GRAY,offset);
+            if(live.roll_key>=LIVE_EFFECTS_COUNT){
+                static const char *const roll[SNARE_ROLL_RATES_COUNT]={"R 1/8","R 1/16","R 1/32"};
+                live_text(164,216,72,&FONT_P20,roll[live.roll_key-LIVE_EFFECTS_COUNT],C_AMB,offset);
+            }else live_text(164,216,72,&FONT_P20,engine_momentary_state(1)>=0?"WAIT":live.fx_key>=0?"HELD":"LIVE",C_GRAY,offset);
         }
         else if(live.mode==LIVE_AUTOMATION) {
             pref_t r=live_ref(ui.part,live.auto_parameter);

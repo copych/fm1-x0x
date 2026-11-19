@@ -37,7 +37,7 @@ async function boot(){
 }
 for(const w of [4,5,6,7,8]){
   const {e,wait,tap,frames}=await boot();tap(13);tap(10);wait(800);tap(0);
-  e.web_keys(1<<white[w]);wait(80);
+  e.web_keys(1<<white[w]);wait(150); // allow the next quantized sixteenth front
   const n=w>=6?Math.round(44100*30/125/(1<<(w-6))):8192;
   const samples=frames(w>=6?n*3:44100,true);
   assert(samples.every(Number.isFinite),'finite audio');

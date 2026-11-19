@@ -8,7 +8,9 @@ press SAVE
 tapkey w1
 release SAVE
 # pattern 2 is empty (the factory patterns are): the copy needs no question
+press SEL
 tap HOME
+release SEL
 tapkey w1
 expect pattern 2
 tap EDIT
@@ -22,7 +24,9 @@ release HOME
 expect tempo 120
 tap PLAY
 wait 1000
+press SEL
 tap HOME
+release SEL
 tapkey w0
 expect cue 1
 expect pattern 2
@@ -60,6 +64,8 @@ wait 300
 expect pattern 1
 expect hit0.0.0 1
 expect hit0.0.8 1
+press SEL
 tap HOME
+release SEL
 tapkey w1
 expect hit0.1.4 1

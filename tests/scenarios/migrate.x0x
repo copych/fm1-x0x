@@ -23,7 +23,9 @@ expect laneval0.1.4.40 255
 expect songlen 2
 expect songbar2.0 16
 # pattern 16
+press SEL
 tap HOME
+release SEL
 tapkey w15
 wait 50
 expect pattern 16
@@ -36,7 +38,9 @@ expect pattern 1
 expect hit0.0.31 1
 expect hit0.0.1 0
 expect laneval0.1.4.5 105
+press SEL
 tap HOME
+release SEL
 tapkey w15
 wait 50
 expect hit0.0.1 1

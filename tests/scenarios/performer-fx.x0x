@@ -13,7 +13,7 @@ wait 100
 expect live_fx -1
 expect mastermode 0
 key w1 down
-wait 100
+wait 150
 expect mastermode 3
 tap LFO
 expect live_fx -1

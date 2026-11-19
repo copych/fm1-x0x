@@ -2,8 +2,12 @@
 # bar 2 (P2) (songpos and ppat count from 1): the song plays P1 three bars, then P2, then loops.
 wait 300
 tapkey w0
+press SEL
 tap HOME
+release SEL
+press SEL
 tap HOME
+release SEL
 expect view 6
 tapkey w0
 tapkey w1
@@ -28,7 +32,9 @@ wait 1920
 expect songpos 1
 expect ppat0 1
 # started on the SONG screen, the song keeps playing on HOME; stopped there, PLAY plays the patterns
+press SEL
 tap HOME
+release SEL
 expect songon 1
 expect songpos 1
 tap PLAY

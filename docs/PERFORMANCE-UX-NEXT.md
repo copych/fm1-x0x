@@ -414,3 +414,67 @@ flashed. The concrete pending checks are listed in the follow-up sections above.
 
 Local install/emulator pages are prepared for live10. Source and build record
 are committed locally; no GitHub push or public Pages deployment requested.
+
+## Live11 implementation and validation scope
+
+Baseline: live10 application `43e24e2`, source/build record `6122972`. Board and
+bootloader/package identity unchanged: FM-1 / AC79, FM-1_9010201, existing matched
+JieLi/AC79 SDK. 44.1 kHz stereo, engine chunks ≤256 frames within the existing
+512-frame I2S half (~11.61 ms). Hardware timing remains unmeasured.
+
+Changes: new `live_drums.h` and `live_quantized_fx.h`, engine/render scheduling,
+main-loop performer controls/drawing, and a shared implementation wrapper in
+`master.c` retaining the previous stereo path as well as an unfiltered variant.
+Drum-bus filter reuses the existing master's prepared cutoff/resonance
+coefficients, with four independent state pairs for drum L/R and their reverb/
+delay sends. It runs after the 808 worker has retired and before mixing 303s.
+No audio buffers added. Mode weights crossfade over 96 samples; cutoff glide,
+SVF arithmetic and denormal flushing follow existing master filtering. Bypass
+is exact after the weights return to zero. Master compression/limiting stay
+global; existing send-effect tails bypass the drum filter.
+
+UI sends complete commands on the existing SPSC queue (named subcommands 253
+momentary, 254 roll, 255 reset), with bounded audio-owned state and no new shared
+staging. Momentary starts wait for the 909's next step callback before drum hits;
+release cancels a pending start or restores an active override. The chopper's
+open edge resets at each 16th; its gain is open at the attack and closes during
+the tail. Master processing and audio gestures now run per sequencer subchunk,
+so a front cannot retroactively affect earlier audio in the same render block.
+Saved pot snapshots restore only the regular held gesture; rolls are separate.
+
+Rolls: white 10/11/12 in every FX view, 1/8, 1/16, 1/32, current snare of the
+last focused kit. A deliberate roll auditions a muted pattern voice without
+changing its state; whole-kit mute wins. It replaces sequenced snare triggers
+while active, preserves pattern data, and leaves the final snare tail on release.
+Midpoint hits split the existing subchunk loop and follow half the actual
+upcoming interval, including swing. Rolls require internal clock; transport stop,
+unsupported clock/length, mode change or key release cancels them. Effects and
+rolls are discarded on project reset. All audio loops have fixed small bounds;
+no allocation, I/O, logging, locks, waits, new math-library calls or doubles.
+Coefficient divide/branch costs and peak stack still need target measurement.
+
+New WASM tests cover all 128 combined Drive positions and inverse readback,
+transpose bounds, repeated selection, compressor controls, all nine quantized
+effect onsets, early cancellation, chopper attack/tail phase, roll rates and
+simultaneous LP/knob/release/stop, finite/bounded audio, isolated 303 bit-identity
+under drum filtering, and audible change on isolated drums. Browser-only
+readback/counters are behind X0X_WEB and absent from target code/state.
+Legacy scenario fixtures now explicitly use SEL+HOME to reach classic views;
+their pattern/storage/audio assertions remain. The probability-reset fixture
+needs one such gesture because it closes settings and enters patterns together.
+Effect fixtures allow the new next-16th onset rather than assuming immediate FX.
+
+The first run identified those stale navigation/timing fixtures and a test-export
+linkage error (fixed through read-only engine getters). Initial isolated-drum
+fixture had no generated groove; it now generates one and asserts an audible
+reference before routing comparisons. Three external DSP comparisons could not
+run without ../schwung-9W9, ../schwung-8W8, ../schwung-303. The runner now supports
+explicit X0X_SKIP_EXTERNAL_REFS=1 for that scoped run; default requirements stay
+unchanged. TB3PO reference is also absent; sequencer tests run with that optional
+comparison omitted. Retired breakbeat scenarios remain explicitly skipped.
+
+Pre-build source gate: audio hot path/numerics and ownership PASS for inspected
+bounded structure, dependencies/includes/licenses PASS (no new firmware deps,
+notices retained), compatibility PASS for unchanged persistent/loader contracts.
+Target/build/ABI, updated memory/stack, complete host validation and hardware
+real-time/recovery remain UNVERIFIED until the following results are recorded.

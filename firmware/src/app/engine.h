@@ -61,7 +61,17 @@ int engine_live_clock_ready(void);
 void engine_live_reset(void); /* new project / restore: discard session gestures */
 int engine_section_value(int field); /* current, pending (-1), bar (1-based), length */
 enum eAudioGesture { GESTURE_TAPE, GESTURE_CHOP, GESTURE_REPEAT8, GESTURE_REPEAT16, GESTURE_REPEAT32, GESTURES_COUNT };
+enum eLiveEffect { LIVE_FX_NONE=-1,LIVE_FX_LOWPASS,LIVE_FX_HIGHPASS,LIVE_FX_PUMP,LIVE_FX_DRIVE,
+    LIVE_FX_TAPE,LIVE_FX_CHOP,LIVE_FX_REPEAT8,LIVE_FX_REPEAT16,LIVE_FX_REPEAT32,LIVE_EFFECTS_COUNT };
+void engine_momentary(int effect); /* -1 cancels/releases; starts at next 909 16th */
+int engine_momentary_state(int pending);
 void engine_audio_gesture(int gesture); /* -1 releases to live audio */
+enum eSnareRollRate { SNARE_ROLL_8, SNARE_ROLL_16, SNARE_ROLL_32, SNARE_ROLL_RATES_COUNT };
+void engine_snare_roll(int kit,int rate); /* -1 releases; internal performance clock */
+#if defined(X0X_WEB)
+int engine_test_roll(int field);
+float engine_test_chop_phase(void);
+#endif
 /* Main -> render mailbox: one outstanding operation; 0 busy/invalid, 1 accepted.
  * Completion: 0 pending/none, action+1 success, -1 no capture. Poll on main. */
 int engine_motif_request(enum eMotifAction action, int bass, int pattern);

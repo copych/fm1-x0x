@@ -61,5 +61,7 @@ void master_process(master_t *m, float *x, int n, float volume);
 /* X0X stereo: the compressor reads both sides' power, the limiter the louder side, and each moves
  * both together; the filter runs on each. With l == r it is master_process exactly. */
 void master_process_st(master_t *m, float *l, float *r, int n, float volume);
+/* Same compressor/volume/limiter, when the filter is routed upstream. */
+void master_process_st_unfiltered(master_t *m,float *l,float *r,int n,float volume);
 /* the value of a pot in its unit, for the screen ("-12 dB", "4:1", "30 ms") */
 void master_format(const master_t *m, int i, char *buf);

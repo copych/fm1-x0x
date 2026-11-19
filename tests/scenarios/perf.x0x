@@ -8,7 +8,9 @@ press HOME
 turn SELECT -5
 release HOME
 expect tempo 120
+press SEL
 tap HOME
+release SEL
 tapkey b2
 expect mute 4194304
 # GLO > PERFORMANCE (the eighteenth row)
@@ -51,7 +53,9 @@ wait 300
 expect perftest 0
 wait 6000
 expect patptr 0
+press SEL
 tap HOME
+release SEL
 wait 300
 expect perftest -1
 expect patptr 1
