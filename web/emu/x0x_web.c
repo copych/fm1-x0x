@@ -80,6 +80,10 @@ __attribute__((used, visibility("default"))) uint32_t web_blits(void) { return b
 __attribute__((used, visibility("default"))) uint32_t web_now(void) { return now_ms; }
 __attribute__((used, visibility("default"))) uint32_t web_cpu(void) { return cpu_pct; }
 __attribute__((used, visibility("default"))) uint32_t web_breakbeat(void) { return X0X_BREAKBEAT; }
+/* Observable state for browser regressions; the same real UI/engine are driven. */
+__attribute__((used, visibility("default"))) int web_live_mode(void) { return live.mode; }
+__attribute__((used, visibility("default"))) int web_section(int field) { return engine_section_value(field); }
+__attribute__((used, visibility("default"))) int web_auto_value(int t,int v,int i) { return engine_auto_value(t,v,i); }
 
 /* saved objects: the page keeps them (localStorage) and gives them back before boot */
 __attribute__((used, visibility("default"))) uint8_t *web_store(uint32_t obj) { return obj < OBJ_NOBJ ? store[obj] : 0; }

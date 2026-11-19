@@ -1,5 +1,35 @@
 wait 300
 tap OCT+
+snapline 0
+press ENV
+tap OCT+
+release ENV
+wait 200
+tap OCT+
+expect linechg0 1
+press LFO
+tap OCT-
+release LFO
+wait 200
+expect linechg0 0
+spin K1 7
+expect sound2.0.0 55
+tap REC
+expect linechg0 1
+expect sound2.0.0 55
+press REC
+tap OCT+
+release REC
+expect linechg0 0
+expect sound2.0.0 55
+tap ARP
+expect live_mode 4
+tap ARP
+wait 200
+expect linechg0 0
+tap REC
+expect linechg0 0
+# Multi-part captures return atomically and remain separate from sound.
 tapkey b3
 tap OCT+
 press SEL
@@ -11,40 +41,13 @@ snapline 1
 press ENV
 tap OCT+
 release ENV
-wait 250
+wait 300
 tap OCT+
 expect linechg0 1
 expect linechg1 1
 press LFO
 tap OCT-
 release LFO
+wait 200
 expect linechg0 0
 expect linechg1 0
-spin K1 7
-expect sound2.0.0 55
-expect sound2.1.0 55
-press HOME
-tapkey b3
-release HOME
-tap REC
-expect linechg0 1
-expect linechg1 1
-expect sound2.0.0 55
-expect sound2.1.0 55
-expect mute 8388608
-press REC
-tap OCT+
-release REC
-expect linechg0 0
-expect linechg1 0
-expect mute 8388608
-expect view 9
-# Director commits also become one musical undo, preserving A and the manual mix.
-tap ARP
-wait 150
-expect linechg0 0
-expect linechg1 1
-tap REC
-expect linechg0 0
-expect linechg1 0
-expect mute 8388608

@@ -48,6 +48,19 @@ enum eMotifAction { MOTIF_LIKE, MOTIF_RETURN, MOTIF_GENERATE, MOTIF_PERFORM, MOT
 enum ePerformAction { PERFORM_NEW, PERFORM_DEVELOP, PERFORM_RETURN, PERFORM_UNDO, PERFORM_REDO, PERFORM_ACTIONS_COUNT };
 int engine_perform_request(enum ePerformAction action, unsigned mask, uint32_t entropy);
 int engine_director_pending(void);
+enum eLiveSection { SECTION_INTRO, SECTION_GROOVE, SECTION_BUILD, SECTION_BREAK,
+    SECTION_BRIDGE, SECTION_DROP, SECTION_OUTRO, SECTIONS_COUNT };
+enum eLiveAutomation { AUTO_MODULATE, AUTO_GROW, AUTO_DECAY, AUTO_SHAPES_COUNT };
+void engine_auto_start(int t, int v, int i, int shape, int depth, int bars);
+void engine_auto_stop(void);
+int engine_auto_value(int t, int v, int i);
+void engine_section_queue(int section);
+void engine_section_resize(int delta);
+int engine_live_clock_ready(void);
+void engine_live_reset(void); /* new project / restore: discard session gestures */
+int engine_section_value(int field); /* current, pending (-1), bar (1-based), length */
+enum eAudioGesture { GESTURE_TAPE, GESTURE_CHOP, GESTURE_REPEAT8, GESTURE_REPEAT16, GESTURE_REPEAT32, GESTURES_COUNT };
+void engine_audio_gesture(int gesture); /* -1 releases to live audio */
 /* Main -> render mailbox: one outstanding operation; 0 busy/invalid, 1 accepted.
  * Completion: 0 pending/none, action+1 success, -1 no capture. Poll on main. */
 int engine_motif_request(enum eMotifAction action, int bass, int pattern);

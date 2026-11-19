@@ -1,0 +1,47 @@
+wait 300
+tap OCT+
+tap ENV
+expect live_mode 3
+spin K3 2
+spin K4 1
+tap PLAY
+wait 3800
+expect section_bar 3
+tapkey w4
+expect auto_cutoff >48
+expect sound2.0.0 48
+wait 2000
+expect section_bar 4
+wait 2300
+expect auto_cutoff <56
+tapkey b2
+spin K1 1
+wait 20
+expect auto_cutoff -1
+expect sound2.0.0 >48
+tap ARP
+expect live_mode 4
+tapkey w3
+expect section_pending 3
+tapkey w8
+expect section_length 5
+shot performer-director.png
+wait 10000
+expect section 3
+expect section_pending -1
+expect section_length 4
+shot performer-break.png
+# Restoring a project discards pending section/automation session state.
+tap PLAY
+backup live6.x0b
+tapkey w0
+expect section_pending 0
+restore live6.x0b
+expect restore_rc 0
+wait 100
+expect section 1
+expect section_pending -1
+expect section_bar 1
+expect section_length 4
+expect live_mode 0
+expect auto_cutoff -1

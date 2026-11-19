@@ -4,6 +4,7 @@ static void live_fx_release(void)
 {
     int key = live.fx_key;
     if (key < 0) return;
+    if(key>=LIVE_FX_TAPE) { engine_audio_gesture(-1); live.fx_key=LIVE_FX_NONE; return; }
     if (key < 2) {
         engine_set(T_MST,0,MST_DJF,proj.sound.v[T_MST][0][MST_DJF]);
         engine_set(T_MST,0,MST_MODE,proj.sound.v[T_MST][0][MST_MODE]);
@@ -38,6 +39,8 @@ static void live_select(int part, int extend)
         }
     } else live.selected = (uint8_t)(1u << part);
     ui.part = (uint8_t)part; ui.touched = -1; ui.help = 0;
+    live.mode=LIVE_INSTRUMENT; live.extra=0;
+    if(part<NKIT) live.mix_kit=(uint8_t)part;
     build_pages();
 }
 static void live_remember_mix(void)
@@ -67,6 +70,9 @@ static int live_key(int black, int white, int key, int down)
 {
     if (black >= 0) {
         if (!down || black >= LIVE_TARGETS) return 1;
+        if (live.mode==LIVE_MIXER && !(ui.btn & ((1u<<B_SEL)|(1u<<B_HOME)|(1u<<B_REC)))) {
+            live_remember_mix(); mute_part(black); return 1;
+        }
         if (ui.btn & (1u << B_HOME)) {
             ui.btn_used |= 1u << B_HOME; live_remember_mix(); mute_part(black);
         } else if (ui.btn & (1u << B_REC)) {
@@ -79,17 +85,48 @@ static int live_key(int black, int white, int key, int down)
     }
     if (white < 0) return 1;
     if (!down && live.fx_key == white) { live_fx_release(); return 1; }
+    if(live.mode==LIVE_MIXER) {
+        if(down && white<NDRUM) {
+            if(ui.btn&(1u<<B_REC)) {
+                int focus=ui.part;ui.btn_used|=1u<<B_REC;ui.part=live.mix_kit;
+                live_solo(LIVE_SOLO_INSTRUMENT,white);ui.part=(uint8_t)focus;
+            } else {
+                ui.btn_used|=ui.btn&(1u<<B_HOME);live_remember_mix();mute_track(live.mix_kit,white);
+            }
+        }
+        return 1;
+    }
+    if (live.mode==LIVE_AUTOMATION && down) {
+        if(!engine_live_clock_ready()){warn("USE 909 16 STEPS",0);return 1;}
+        if (white<9) {
+            pref_t r=live_ref(ui.part,live.auto_parameter);
+            live.auto_shape=(uint8_t)(white/3); live.auto_depth=(uint8_t)(white%3+1);
+            if (r.kind==R_ENG) engine_auto_start(r.a,r.b,r.c,live.auto_shape,live.auto_depth,1<<live.auto_period);
+            say("AUTOMATION",0);
+        } else engine_auto_stop();
+        return 1;
+    }
+    if (live.mode==LIVE_DIRECTOR && down) {
+        if(!engine_live_clock_ready()){warn("USE 909 16 STEPS",0);return 1;}
+        if (white<SECTIONS_COUNT) engine_section_queue(white);
+        else if (white==7 || white==8) engine_section_resize(white==7?-1:1);
+        else if (white==9) {
+            if (!engine_director_request(is_drum()?ui.part:0)) warn("DIRECTOR NOT READY",0);
+        }
+        return 1;
+    }
     if (down && white < NDRUM && is_drum() && (ui.btn & (1u << B_HOME))) {
         ui.btn_used |= 1u << B_HOME; live_remember_mix(); mute_track(ui.part,white); return 1;
     }
     if (down && white < NDRUM && is_drum() && (ui.btn & (1u << B_REC))) {
         ui.btn_used |= 1u << B_REC; live_solo(LIVE_SOLO_INSTRUMENT,white); return 1;
     }
-    if (ui.btn & (1u << B_FX)) {
+    if (live.mode==LIVE_EFFECTS || (ui.btn & (1u << B_FX))) {
         if (!down || white >= LIVE_EFFECTS_COUNT) return 1;
         ui.btn_used |= 1u << B_FX;
         live_fx_release(); live.fx_key = (int8_t)white;
-        if (white < 2) engine_set(T_MST,0,MST_DJF,white ? 103 : 25);
+        if(white>=LIVE_FX_TAPE) engine_audio_gesture(white-LIVE_FX_TAPE);
+        else if (white < 2) engine_set(T_MST,0,MST_DJF,white ? 103 : 25);
         else if (white == 2) engine_set(T_MST,0,MST_PUMP,100);
         else engine_set(T_FX,0,FX_DRIVE,100);
         return 1;
@@ -106,6 +143,21 @@ static int live_key(int black, int white, int key, int down)
             build_pages();
         }
     } else {
+        if (down && white<6) {
+            static const int8_t delta[6][4]={{-8,-12,-8,0},{4,16,16,0},{10,8,14,-8},{-4,-4,0,16},{-16,-8,-12,-8},{16,0,4,8}};
+            int p,i;
+            for(p=NKIT;p<LIVE_TARGETS;++p) if(live.selected&(1u<<p)) for(i=0;i<4;++i) {
+                pref_t r=PR(R_ENG,T_303,p-NKIT,i);int value=engine_auto_value(r.a,r.b,r.c);
+                pref_set(r,(value>=0?value:pref_get(r))+delta[white][i]);
+            }
+            for(p=NKIT;p<LIVE_TARGETS;++p) if(live.selected&(1u<<p)) {
+                pref_t r=PR(R_ENG,T_MIX,p,white==5?MX_PAN:MX_DLY);
+                if(white==0 || white==3 || white==5)
+                    pref_set(r,pref_get(r)+(white==0?-16:white==3?16:p==PART_303A?-8:8));
+            }
+            say("SOUND MACRO",0); return 1;
+        }
+        return 1; /* note entry remains in the dedicated editor */
         int note = 36 + key;
         if (down) {
             live.note_part = (uint8_t)bidx();
@@ -117,6 +169,12 @@ static int live_key(int black, int white, int key, int down)
 }
 static int live_button(int b)
 {
+    if (b==B_EDIT || b==B_LFO || b==B_FX || b==B_ENV) {
+        live_fx_release(); live_note_release();
+        if(b==B_EDIT) { if(live.mode==LIVE_INSTRUMENT)live.extra^=1; else live.extra=0; live.mode=LIVE_INSTRUMENT; }
+        else live.mode=b==B_LFO?LIVE_MIXER:b==B_FX?LIVE_EFFECTS:LIVE_AUTOMATION;
+        build_pages(); return 1;
+    }
     if (b == B_HOME) { set_view(V_HOME); return 1; }
     if (b == B_PLAY && (ui.btn & (1u << B_HOME))) {
         ui.btn_used |= 1u << B_HOME;
@@ -132,6 +190,7 @@ static int live_button(int b)
             live.restore_valid = 0; say("MIX RESTORED",0);
         } else live.selected = (uint8_t)(1u << ui.part);
     } else if (b == B_ARP) {
+        if(live.mode!=LIVE_DIRECTOR) { live_fx_release(); live.mode=LIVE_DIRECTOR; build_pages(); return 1; }
         if (engine_director_pending()) { engine_director_cancel(); say("DIRECTOR CANCEL",0); }
         else if (engine_director_request(is_drum() ? ui.part : 0)) say("DIRECTOR QUEUED",0);
         else warn("DIRECTOR NOT READY","GENERATE A / 16 STEP");
@@ -180,6 +239,27 @@ static void live_knob(int knob, int delta)
     enum eLiveLayer layer = live_layer();
     const x0x_param_t *d = pref_desc(live_ref(focus,knob));
     live_fx_release();
+    if(live.mode==LIVE_AUTOMATION) {
+        int value;
+        uint8_t *field=knob==0?&live.auto_parameter:knob==1?&live.auto_depth:knob==2?&live.auto_period:&live.auto_shape;
+        int min=knob==1?1:0, max=knob==3?3:4;
+        value=*field+delta; if(value<min)value=min; if(value>=max)value=max-1;
+        *field=(uint8_t)value; return;
+    }
+    if(live.mode==LIVE_DIRECTOR && knob>=2) {
+        if(knob==2)engine_section_resize(delta);
+        else { int s=engine_section_value(1); if(s<0)s=engine_section_value(0); s+=delta>0?1:-1;
+            if(s<0)s=0;
+            if(s>=SECTIONS_COUNT)s=SECTIONS_COUNT-1;
+            engine_section_queue(s); }
+        return;
+    }
+    if(live.mode==LIVE_MIXER && layer==LIVE_MIX) {
+        pref_t r=live_ref(focus,knob); pref_set(r,pref_get(r)+delta); return;
+    }
+    if(live.mode==LIVE_DIRECTOR) {
+        pref_t r=PR(R_DGEN,live.mix_kit,0,knob); pref_set(r,pref_get(r)+delta); return;
+    }
     if (d && !d->names && d->max >= 24) step = accel(EN_K1+knob,delta,d->max);
     else step = delta > 0 ? 1 : -1;
     for (p = 0; p < LIVE_TARGETS; ++p) {
@@ -190,7 +270,9 @@ static void live_knob(int knob, int delta)
         if ((layer == LIVE_SOUND || layer == LIVE_EXTRA || layer == LIVE_COMPOSE) && (p < NKIT) != (focus < NKIT)) continue;
         ui.part = (uint8_t)p;
         r = live_ref(p,knob); cc_hand = 1;
-        pref_set(r,pref_get(r)+step); cc_hand = 0; motion_touch(r);
+        { int current=r.kind==R_ENG?engine_auto_value(r.a,r.b,r.c):-1;
+            pref_set(r,(current>=0?current:pref_get(r))+step); }
+        cc_hand = 0; motion_touch(r);
     }
     ui.part = (uint8_t)focus;
     ui.btn_used |= ui.btn & ((1u << B_EDIT)|(1u << B_ENV)|(1u << B_LFO)|(1u << B_FX)|(1u << B_SEL));

@@ -23,7 +23,7 @@ static void draw_live(int band)
             ui.part == PART_303A ? "LEAD" : "RESPONSE";
         cv_text(4,vc(&FONT_M,0,28),&FONT_M,name,part_col());
         if (live.fx_key >= 0) {
-            static const char *const fx[4] = {"MASTER LOWPASS","MASTER HIGHPASS","MASTER PUMP","MASTER DRIVE"};
+            static const char *const fx[LIVE_EFFECTS_COUNT] = {"LOWPASS","HIGHPASS","PUMP","DRIVE","TAPE STOP","CHOPPER","REPEAT 1/8","REPEAT 1/16","REPEAT 1/32"};
             cv_text(4,32,&FONT_XS,fx[live.fx_key],C_AMB);
         } else if (is_drum()) {
             cv_text(4,31,&FONT_XS,"WHITE: INSTRUMENT   HOME: MUTE",C_GRAY);

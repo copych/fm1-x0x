@@ -55,7 +55,11 @@ FONTSETS = {
 import os  # noqa: E402
 FONTSET = os.environ.get("X0X_FONTSET", "barlow")    # the others need X0X_FONT_DIRS (not in assets/)
 FONTDIRS = [Path(p) for p in os.environ.get("X0X_FONT_DIRS", "").split(":") if p]
-SIZES = FONTSETS[FONTSET]
+SIZES = FONTSETS[FONTSET] + [
+    ("P20", "BarlowSemiCondensed-SemiBold.ttf", 20, 1, False, 32, 95),
+    ("P24", "BarlowSemiCondensed-SemiBold.ttf", 24, 1, False, 32, 95),
+    ("P36", "BarlowSemiCondensed-SemiBold.ttf", 36, 1, False, 32, 95),
+]
 PAD = 2
 
 

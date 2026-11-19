@@ -7,9 +7,9 @@ root of the `gh-pages` branch. The source and README are on `main` and
 After building a release package and matching emulator, generate the site:
 
 ```sh
-./build.sh --release 1.2.1-live5
-X0X_VERSION=1.2.1-live5 sh web/emu/build.sh
-python3 tools/make_live_pages.py 1.2.1-live5
+./build.sh --release 1.2.1-live6
+X0X_VERSION=1.2.1-live6 sh web/emu/build.sh
+python3 tools/make_live_pages.py 1.2.1-live6
 ```
 
 Publish the contents of `build/live-site` to `gh-pages` using a separate checkout

@@ -981,6 +981,12 @@ static int expect(const char *what, const char *val)
         got = (int)seq.vmute;
     else if (!strcmp(what, "live_selected")) got = live.selected;
     else if (!strcmp(what, "live_layer")) got = live_layer();
+    else if (!strcmp(what, "live_mode")) got = live.mode;
+    else if (!strcmp(what, "section")) got = engine_section_value(0);
+    else if (!strcmp(what, "section_pending")) got = engine_section_value(1);
+    else if (!strcmp(what, "section_bar")) got = engine_section_value(2);
+    else if (!strcmp(what, "section_length")) got = engine_section_value(3);
+    else if (!strcmp(what, "auto_cutoff")) got = engine_auto_value(T_303,0,BASS303_CUTOFF);
     else if (!strcmp(what, "live_fx")) got = live.fx_key;
     else if (!strcmp(what, "live_solo")) got = live.solo_kind;
     else if (!strcmp(what, "mastermode")) got = engine_master_value(MST_MODE);

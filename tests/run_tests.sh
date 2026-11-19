@@ -113,6 +113,7 @@ if command -v emcc >/dev/null 2>&1 && command -v node >/dev/null 2>&1; then   # 
     run emu sh -c "sh web/emu/build.sh >/dev/null 2>&1 && build/host/x0x_host build/host/emu_ref.x0x build/host >/dev/null && \
         node tests/host/emu_test.mjs build/emu/x0x.wasm build/host/emu_ref.wav"
     run emu-slots node tests/host/emu_slots_test.mjs build/emu/x0x.wasm build/test_loops/loop1.wav
+    run emu-performer node tests/host/emu_performer_test.mjs build/emu/x0x.wasm
 fi
 for s in tests/scenarios/*.x0x; do
     n=$(basename "$s" .x0x)

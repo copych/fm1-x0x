@@ -232,7 +232,7 @@ static breaks_t brk POOL;
 #endif
 static fxbus_t fx POOL;
 static master_t mst;
-#define DLY_LEN 88200
+#define DLY_LEN 55432 /* 32768 samples reassigned to stereo performance capture */
 static int16_t dly_buf[DLY_LEN] POOL;
 #if X0X_BREAKBEAT
 static volatile uint8_t brk_hold;      /* main loop is rewriting the break loops: ISR leaves it alone */
@@ -304,7 +304,7 @@ static float mix_pl[NPARTS] = {1, 1, 1, 1, 1}, mix_pr[NPARTS] = {1, 1, 1, 1, 1};
 /* ------------------------------------------------------- command queue --- */
 /* uint32 commands, single producer (main loop) / single consumer (audio ISR):
  * type:4 | a:8 | b:8 | c:12 */
-enum { C_PARAM_T0 = 0, C_DRUM = 8, C_BON, C_BOFF, C_BRK, C_NOP };
+enum { C_PARAM_T0 = 0, C_DRUM = 8, C_BON, C_BOFF, C_BRK, C_NOP, C_LIVE_AUTO, C_LIVE_FORM, C_LIVE_FX };
 #define CQ 1024u
 static uint32_t cq[CQ];
 static volatile uint32_t cq_w, cq_r;
@@ -417,6 +417,9 @@ static void apply_param(int t, int v, int i, int val)    /* ISR */
 }
 
 void engine_set(int t, int v, int i, int val) { cq_put((uint32_t)t, (uint32_t)v, (uint32_t)i, (uint32_t)val); }
+
+#include "live_runtime.h"
+#include "live_audio_fx.h"
 
 /* the output's scale: Felucca's -6 dBFS ceiling of the 24-bit codec (2^22), or its full scale (LOUD); the
  * clamp keeps an over from wrapping (normal: the codec's own full scale, as before) */
@@ -572,8 +575,11 @@ static int prob_skip(int part, int v)                 /* ISR: 1 = this hit does 
 static void s_drum(void *x, int kit, int v, float vel);
 static int s_drum_seq(void *x, int kit, int v, float vel)
 {
-    if (prob_skip(kit, v))
+    if (!live_section_allows(kit,v) || prob_skip(kit, v))
         return 0;
+    if(form.section==SECTION_BUILD)vel*=0.65f+0.35f*(float)(form.bar+1)/(float)form.length;
+    else if(form.section==SECTION_OUTRO)vel*=1.0f-0.65f*(float)form.bar/(float)form.length;
+    else if(form.section==SECTION_DROP && !form.bar && v==0)vel=1.0f;
     s_drum(x, kit, v, vel);
     return 1;
 }
@@ -592,7 +598,8 @@ static void s_drum(void *x, int kit, int v, float vel)
 static void s_bon(void *x, int p, int note, int acc, int sl)
 {
     (void)x;
-    if (prob_skip(PART_303A + p, 0))                  /* skipped: a rest */
+    if(form.section==SECTION_BUILD && form.bar+1>=form.length)acc=1;
+    if (!live_section_allows(PART_303A+p,0) || prob_skip(PART_303A + p, 0))
         bass303_note_off(&b303[p]);
     else
         bass303_note_on(&b303[p], note, acc, sl);
@@ -629,8 +636,11 @@ static void s_midi(void *x, uint8_t st, uint8_t d1, uint8_t d2)
 static void s_step(void *x, int t, int p)
 {
     (void)x;
-    if (t == TRK_DRUM && p == 0 && !(seq.t[TRK_DRUM].bars & 3u))
-        director_apply(); /* before any part's first hit on this phrase boundary */
+    if (t == TRK_DRUM) {
+        int boundary=live_runtime_step(p);
+        live_runtime_tick(0);
+        if (p==0 && boundary) director_apply();
+    }
 #if !X0X_BREAKBEAT
     if (t == TRK_BRK) return; /* dormant project lanes must not automate the live mix */
 #endif
@@ -655,6 +665,7 @@ static void mot_apply(void *x, int t, int v, int i, int val)
         if ((v >> 4) < NPARTS && (v & 15) < NDRUM)
             prob[v >> 4][v & 15] = (uint8_t)val;
     } else if (t < NTARGETS) {
+        if(engine_auto_value(t,v,i)>=0)return;
         apply_param(t, v, i, val);
         cc_motion(t, v, i, val);                      /* CC OUT ALL: what the lane plays goes out too */
     }
@@ -984,8 +995,12 @@ static void drain(void)
     while (r != cq_w) {
         uint32_t c = cq[r % CQ], type = c >> 28, a = (c >> 20) & 0xFFu, b = (c >> 12) & 0xFFu, v = c & 0xFFFu;
         r++;
-        if (type < 8u)
+        if (type < 8u) {
+            live_auto_cancel((int)type,(int)a,(int)b,0);
             apply_param((int)type, (int)a, (int)b, (int)v);
+        } else if (type==C_LIVE_AUTO || type==C_LIVE_FORM)
+            live_runtime_command(a,b,v,type==C_LIVE_FORM);
+        else if(type==C_LIVE_FX) { if(a==255)live_audio_reset();else live_audio_command((int)a-1); }
         else if (type == C_DRUM)
             s_drum(0, (int)a, (int)b, (float)v / 4095.0f);
         else if (type == C_BON && a < NBASS)
@@ -1247,6 +1262,7 @@ void engine_render(int32_t *out_lr, uint32_t n)
         drain();
         if (mot_on)
             motion_tick(&mot, n);
+        live_runtime_tick(n);
         fxbus_set_bpm(&fx, seq_tempo(&seq));
         seq_advance(&seq, 0, &SINK);
         PROF_ADD(7, pt);
@@ -1267,6 +1283,7 @@ void engine_render(int32_t *out_lr, uint32_t n)
     {
         PROF_T(pt);
         master_process_st(&mst, out_l, out_r, (int)n, vol);
+        live_audio_process(out_l,out_r,n);
         PROF_ADD(6, pt);
     }
     for (i = 0; i < n; i++) {
@@ -1483,6 +1500,10 @@ void engine_init(pattern_t *patterns, song_t *song, lane_t *lanes, const sound_t
     mot.base = mot_base;
     mot.apply = mot_apply;
     mot_base_snd = base;
+    { int k; for(k=0;k<LIVE_AUTO_LANES;++k) live_auto[k].active=0; }
+    form.section=SECTION_GROOVE; form.pending=-1; form.length=4;
+    form.bar=form.started=form.was_playing=0; form.step=form.elapsed=0;
+    live_audio_reset();
     for (p = 0; p < NPARTS; p++) {
         mix_level[p] = 1.0f;
         mix_rev[p] = mix_dly[p] = 0.0f;

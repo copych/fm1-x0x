@@ -1,43 +1,39 @@
 wait 300
-expect mastermode 0
-expect mastercutoff 127
-press FX
+tap OCT+
+tap PLAY
+wait 600
+tap FX
+expect live_mode 2
 key w0 down
 wait 100
-expect live_fx 0
 expect mastermode 1
-expect sound6.0.13 64
-shot performer-fx.png
+expect live_fx 0
 key w0 up
 wait 100
 expect live_fx -1
 expect mastermode 0
-expect mastercutoff 127
 key w1 down
 wait 100
-expect live_fx 1
 expect mastermode 3
-# Modifier release restores the effect even if the musical key stays down.
-release FX
+tap LFO
+expect live_fx -1
+expect mastermode 0
+key w1 up
+tap FX
+key w6 down
+wait 500
+expect live_fx 6
+shot performer-fx.png
+key w6 up
 wait 100
 expect live_fx -1
-expect mastermode 0
-key w1 up
-# Changing the selected target restores the fixed master-target gesture.
-press FX
-key w0 down
-tapkey b0
-expect live_fx -1
-expect part 0
-release FX
-key w0 up
-expect mastermode 0
-# Leaving performer mode cannot strand an effect.
-press FX
-key w1 down
-tap SEQ
-expect view 8
-release FX
-key w1 up
-expect mastermode 0
-expect live_fx -1
+key w4 down
+wait 600
+key w4 up
+wait 200
+expect playing 1
+key w5 down
+wait 300
+key w5 up
+tap PLAY
+expect playing 0

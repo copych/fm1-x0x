@@ -2,12 +2,12 @@
 
 Turn your FM-1 into an instrument for live generative acid performance. Discover a bassline, develop it while it plays, bring in drums, and shape the sound with your hands. Two independent 303s, 909 and 808 drum machines, and a single LIVE screen keep musical changes, sound controls and mixing close together.
 
-**Current version: 1.2.1-live5 — experimental.** This fork builds on X0X 1.2.1. The new performance workflow has not yet been validated on an actual FM-1.
+**Current version: 1.2.1-live6 — experimental.** This fork builds on X0X 1.2.1. The new performance workflow has not yet been validated on an actual FM-1.
 
 - **[Try the browser emulator](https://copych.github.io/fm1-x0x/emu/)** — no hardware needed.
 - **[Install on your FM-1](https://copych.github.io/fm1-x0x/install/)** — Chrome or Edge, over USB.
 - **[Performer controls](https://copych.github.io/fm1-x0x/performance/)** — complete gestures and screenshots.
-- **[Download live5 firmware](https://copych.github.io/fm1-x0x/firmware/x0x-1.2.1-live5.fwsc)**.
+- **[Download live6 firmware](https://copych.github.io/fm1-x0x/firmware/x0x-1.2.1-live6.fwsc)**.
 
 ![LIVE performer screen](docs/img/performer/live.png)
 
@@ -15,11 +15,11 @@ Turn your FM-1 into an instrument for live generative acid performance. Discover
 
 - **Two acid voices:** independent 303 synthesis, cutoff, resonance, envelope, decay, accent, waveform, drive, pan and effect sends.
 - **Generate and develop:** find a new phrase, explore related variations, LIKE an idea and RETURN to it. Musical undo restores notes and hits while keeping your current sound and mute choices.
-- **A Musical Director prototype:** keep 303 A as the lead and ask for a related response from B and a coordinated drum groove at the next four-bar boundary.
+- **A Musical Director prototype:** keep 303 A as the lead and ask for a related response from B and a coordinated drum groove at the next segment boundary (four bars by default).
 - **909 and 808 drums:** generate all eleven instrument parts. The starting mix brings in kicks and hats; unmute other instruments when you want them.
 - **Predictable drum controls:** move from Straight to Weird and Hollow to Full. Straight grooves range from a single kick with a generated crash on the first beat to four-on-the-floor kicks and sixteenth-note hats.
 - **Hands-on performance:** select several parts, turn linked controls, mute or solo tracks and individual drums, and restore a previous mix.
-- **Effects:** independent 303 drive and sends, shared delay and reverb, master filtering and kick pump. Hold keys for temporary master low-pass, high-pass, pump or drive gestures.
+- **Effects:** independent 303 drive and sends, shared delay and reverb, master filtering and kick pump. Hold keys for filtering, pump, drive, tape stop, chopper or captured stereo repeats.
 
 The display shows your selected parts, current controls, four-bar position and pending Director action. Detailed step editing remains available when needed. Breakbeat playback is disabled in this build to make room for the live features.
 
@@ -36,10 +36,10 @@ The installer checks device and package identity. If it cannot find your device,
 ## Your first groove
 
 1. On the initial **303 A** selection, press **OCT+** to make a phrase, then **PLAY**.
-2. Tap **ARP** to ask the Director for a complementary B phrase and drums. During playback it applies at the next four-bar boundary; tap ARP again to cancel.
+2. Tap **ARP** to select Director, then tap **ARP again** for a complementary B phrase and drums. During playback it applies at the next segment boundary; tap ARP again to cancel.
 3. Turn the four knobs for **cutoff, resonance, envelope modulation and decay**.
 4. Use the first four **black keys** to select **909 / 808 / 303 A / 303 B**. Hold **SEL** while selecting to link several parts.
-5. Select a drum kit and hold **ENV**: knobs 1 and 2 control **Weird** and **Full**. White keys select individual drum instruments.
+5. Select a drum kit, then tap **ARP**: knobs 1 and 2 control **Weird** and **Full**. In the instrument section, white keys select drum instruments.
 
 | Gesture in LIVE | Action |
 | --- | --- |
@@ -50,10 +50,12 @@ The installer checks device and package identity. If it cannot find your device,
 | HOME + white key, drum kit selected | Mute or unmute a drum instrument |
 | REC + black or white key | Solo a part or drum instrument |
 | HOME + SEL | Restore the captured mix |
-| EDIT + knobs | Additional sound controls; on drums, instrument mix and sends |
-| LFO + knobs | Part level, pan, reverb send, delay send |
-| FX + knobs | Master filter, pump, delay feedback, reverb level |
-| FX + white 1–4, held | Temporary master low-pass / high-pass / pump / drive |
+| EDIT, then knobs | Instrument controls; tap EDIT again for additional sound controls |
+| LFO, then knobs / keys | Mixer: four part levels / direct part and drum mutes |
+| FX, then knobs | Master filter, pump, delay feedback, reverb level |
+| FX, then hold white 1–9 | Filters, pump, drive, tape stop, chopper, repeats |
+| ENV | Latched automation: 3 depths of modulation, growing and falling saws |
+| ARP | Director: section queues, +/-1 bar and coordinated phrases |
 | SELECT | Tempo |
 | SAVE | Save the project |
 | HOME + EDIT | Return to LIVE from the detailed editor or settings |
@@ -62,9 +64,11 @@ Key numbers count white and black keys separately from the left. The [complete c
 
 ## What to expect from this version
 
-The Director currently coordinates phrases; section queues such as BUILD, BREAK and DROP are still planned. Tape stop, chopper, audio beat repeat and per-drum DJ filtering are also planned. Current momentary effects act on the master mix.
+Live6 adds bar-aligned automation and queued INTRO/GROOVE/BUILD/BREAK/BRIDGE/DROP/OUTRO sections, with manual segment extension/shrinking. The LIVE display uses a 20 px minimum, 24 px headings and 36 px values. Automation joins current musical phase; a four-bar preset engaged in bar 3 resets after bar 4. Turning its sound knob takes over immediately.
 
-LIKE captures musical patterns and generator settings, not synth patches or the mix. Captures, musical undo and manual mute states are session-only. SAVE keeps the project; it does not make those temporary performance memories persistent.
+Audio FX currently target the master. Repeat history is about 371 ms, so very slow divisions are capped. To fit the capture ring, the maximum delay buffer is reduced from 2 seconds to about 1.26 seconds. Per-target repeats and drum-only DJ filtering remain planned. See the performer guide for the exact controls and limits.
+
+LIKE captures musical patterns and generator settings, not synth patches or the mix. Captures, musical undo, manual mute states, section position and preset automation are session-only. SAVE keeps the project; it does not make those temporary performance memories persistent.
 
 ## About this fork
 

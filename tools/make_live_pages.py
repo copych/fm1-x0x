@@ -42,6 +42,7 @@ def main(version):
     for name in ('LICENSE', 'BUILDING.md'):
         content = content.replace(f'href="{name}"',
                                   f'href="https://github.com/copych/fm1-x0x/blob/codex/motif-development/{name}"')
+    content=content.replace('https://copych.github.io/fm1-x0x/','./')
     landing.write_text(content, encoding='utf-8')
     guide = site / 'performance'
     guide.mkdir()

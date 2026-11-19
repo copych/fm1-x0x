@@ -84,8 +84,11 @@ typedef struct {
 static ui_t ui;
 enum eLiveLayer { LIVE_SOUND, LIVE_EXTRA, LIVE_COMPOSE, LIVE_MIX, LIVE_SEND, LIVE_MASTER, LIVE_LAYERS_COUNT };
 enum eLiveSolo { LIVE_SOLO_NONE, LIVE_SOLO_PART, LIVE_SOLO_INSTRUMENT, LIVE_SOLO_STATES_COUNT };
-enum eLiveEffect { LIVE_FX_NONE = -1, LIVE_FX_LOWPASS, LIVE_FX_HIGHPASS, LIVE_FX_PUMP, LIVE_FX_DRIVE, LIVE_EFFECTS_COUNT };
+enum eLiveEffect { LIVE_FX_NONE = -1, LIVE_FX_LOWPASS, LIVE_FX_HIGHPASS, LIVE_FX_PUMP, LIVE_FX_DRIVE,
+    LIVE_FX_TAPE, LIVE_FX_CHOP, LIVE_FX_REPEAT8, LIVE_FX_REPEAT16, LIVE_FX_REPEAT32, LIVE_EFFECTS_COUNT };
+enum eLiveMode { LIVE_INSTRUMENT, LIVE_MIXER, LIVE_EFFECTS, LIVE_AUTOMATION, LIVE_DIRECTOR, LIVE_MODES_COUNT };
 static struct {
+    uint8_t mode, extra, mix_kit, auto_parameter, auto_depth, auto_period, auto_shape;
     uint8_t selected, capture_mask, capture_action, solo_kind, solo_target, restore_valid;
     uint8_t capture_pat[LIVE_TARGETS];
     int8_t fx_key, held_note;
@@ -817,23 +820,25 @@ static uint8_t *page_of(int view)
 static enum eLiveLayer live_layer(void)
 {
     if (ui.btn & (1u << B_FX)) return LIVE_MASTER;
-    if (ui.btn & (1u << B_LFO)) return (ui.btn & (1u << B_SEL)) ? LIVE_SEND : LIVE_MIX;
-    if (ui.btn & (1u << B_ENV)) return LIVE_COMPOSE;
     if (ui.btn & (1u << B_EDIT)) return LIVE_EXTRA;
-    return LIVE_SOUND;
+    if (live.mode==LIVE_EFFECTS) return LIVE_MASTER;
+    if (live.mode==LIVE_MIXER) return (ui.btn & (1u<<B_SEL)) ? LIVE_SEND : LIVE_MIX;
+    if (live.mode==LIVE_DIRECTOR) return LIVE_COMPOSE;
+    if (live.mode==LIVE_AUTOMATION) return LIVE_SOUND;
+    return live.extra ? LIVE_EXTRA : LIVE_SOUND;
 }
 static pref_t live_ref(int part, int knob)
 {
     enum eLiveLayer layer = live_layer();
     int t = part < NKIT ? (part ? T_808 : T_909) : T_303;
     int v = part < NKIT ? ui.sel[part] : part - NKIT;
+    if (live.mode==LIVE_DIRECTOR) return knob<2 ? PR(R_DGEN,live.mix_kit,0,knob) : PR(R_NONE,0,0,0);
     if (layer == LIVE_MASTER) {
         if (knob < 2) return PR(R_ENG, T_MST, 0, knob ? MST_PUMP : MST_DJF);
         return PR(R_ENG, T_FX, 0, knob == 2 ? FX_DL_FDBK : FX_RV_LEVEL);
     }
     if (layer == LIVE_MIX) {
-        static const uint8_t mix[4] = {MX_LEVEL,MX_PAN,MX_REV,MX_DLY};
-        return PR(R_ENG,T_MIX,part,mix[knob]);
+        return PR(R_ENG,T_MIX,knob,MX_LEVEL);
     }
     if (layer == LIVE_SEND) {
         static const char *const names[4] = {"Level","Pan","Rev","Dly"};
@@ -2677,7 +2682,7 @@ static void input(void)
         return;
     }
     if (ui.view == V_LIVE && ui.overlay == O_NONE) {
-        if (!(ui.btn & (1u << B_FX))) live_fx_release();
+        if (live.mode!=LIVE_EFFECTS && !(ui.btn & (1u << B_FX))) live_fx_release();
         if ((e = enc(EN_SELECT)) != 0) {
             float bpm = seq.bpm + (float)e;
             seq.bpm = bpm < 20.0f ? 20.0f : bpm > 275.0f ? 275.0f : bpm; mark_dirty();
@@ -2687,7 +2692,8 @@ static void input(void)
             live_select(p < 0 ? 0 : p >= LIVE_TARGETS ? LIVE_TARGETS-1 : p,0);
         }
         if ((e = enc(EN_PRESET)) != 0) {
-            if (is_drum() && (ui.btn & (1u << B_EDIT))) {
+            if (live.mode==LIVE_MIXER) live.mix_kit^=1;
+            else if (is_drum() && (ui.btn & (1u << B_EDIT))) {
                 ui.btn_used |= 1u << B_EDIT;
                 turn_ref(find_ref(ui.part ? T_808 : T_909,ui.sel[ui.part],"Dist"),e,EN_PRESET);
             } else if (is_drum()) {
@@ -4043,6 +4049,7 @@ static void draw_footer(void)
 }
 
 #include "performer_draw.h"
+#include "live_surface.h"
 
 static void draw_main(void)
 {
@@ -4267,7 +4274,29 @@ static void leds(void)
     int blink = (ui.frame & 8u) != 0;
     if (ui.view == V_LIVE) {
         b = ui.btn;
+        if(live.mode==LIVE_MIXER)b|=1u<<B_LFO;
+        else if(live.mode==LIVE_EFFECTS)b|=1u<<B_FX;
+        else if(live.mode==LIVE_AUTOMATION)b|=1u<<B_ENV;
+        else if(live.mode==LIVE_DIRECTOR)b|=1u<<B_ARP;
+        else b|=1u<<B_EDIT;
         if (seq.playing) b |= 1u << B_PLAY;
+        if(live.mode!=LIVE_INSTRUMENT) {
+            for(i=0;i<LIVE_TARGETS;++i)if(!part_muted((int)i))k|=1u<<BLACK_KEY[i];
+            if(live.mode==LIVE_MIXER)for(i=0;i<NDRUM;++i) { if(!track_muted(live.mix_kit,(int)i))k|=1u<<WHITE_KEY[i]; }
+            else if(live.mode==LIVE_EFFECTS)for(i=0;i<LIVE_EFFECTS_COUNT;++i) {
+                if(live.fx_key==(int)i)k|=1u<<WHITE_KEY[i]; else d|=1u<<WHITE_KEY[i];
+            } else if(live.mode==LIVE_AUTOMATION) {
+                for(i=0;i<9;++i)d|=1u<<WHITE_KEY[i];
+                k|=1u<<WHITE_KEY[live.auto_shape*3u+live.auto_depth-1u];
+            } else if(live.mode==LIVE_DIRECTOR) {
+                int pending=engine_section_value(1);
+                for(i=0;i<SECTIONS_COUNT;++i)d|=1u<<WHITE_KEY[i];
+                k|=1u<<WHITE_KEY[engine_section_value(0)];
+                if(pending>=0&&blink)k|=1u<<WHITE_KEY[pending];
+                d|=(1u<<WHITE_KEY[7])|(1u<<WHITE_KEY[8])|(1u<<WHITE_KEY[9]);
+            }
+            plat_leds(b,k);plat_keys_dim(d);plat_play_red(0);return;
+        }
         for (i = 0; i < LIVE_TARGETS; ++i) {
             if ((live.selected & (1u << i)) && !(part_muted((int)i) && blink)) k |= 1u << BLACK_KEY[i];
             else if (!part_muted((int)i)) d |= 1u << BLACK_KEY[i];
@@ -4802,6 +4831,7 @@ void ui_init(void)
 {
     int i;
     engine_motif_clear();
+    engine_live_reset();
     ui.drum_notice = 0;
     for (i = 0; i < NKEYS; i++) {
         if (KEY_WHITE[i] >= 0)
@@ -4814,6 +4844,8 @@ void ui_init(void)
     ui.prev_view = V_PART;
     ui.part = PART_303A;
     live.selected = 1u << PART_303A; live.capture_mask = 0;
+    live.mode=LIVE_INSTRUMENT; live.extra=live.mix_kit=live.auto_parameter=live.auto_period=live.auto_shape=0;
+    live.auto_depth=2;
     live.solo_kind = live.restore_valid = 0; live.fx_key = live.held_note = -1;
     ui.held_step = -1;
     ui.brk_held = -1;
@@ -4897,9 +4929,8 @@ void ui_frame(void)
         volatile uint8_t *h = &eng_hit[i / NDRUM][i % NDRUM];
         *h = (uint8_t)(*h - (*h >> 3) - (*h ? 1 : 0));
     }
-    draw_header();
-    draw_main();
-    draw_knobs();
+    if (ui.view==V_LIVE && ui.overlay==O_NONE) draw_live_surface();
+    else { draw_header(); draw_main(); draw_knobs(); }
     leds();
     speak();
     ann_tick(plat_ms());
