@@ -74,7 +74,10 @@ static void draw_live_fx(int offset)
     static const char *const gesture[4]={"FILT","PUMP","FDBK","REV"};
     static const char *const delay[4]={"TIME","FDBK","TONE","LEVEL"};
     static const char *const reverb[4]={"DECAY","TONE","LOCUT","LEVEL"};
-    const char *const *labels=live.fx_view==LIVE_FX_DELAY?delay:live.fx_view==LIVE_FX_REVERB?reverb:gesture;
+    static const char *const comp[4]={"COMP","ATK","REL","MIX"};
+    static const char *const detail[4]={"THR","RATIO","GAIN","PUMP"};
+    const char *const *labels=live.fx_view==LIVE_FX_DELAY?delay:live.fx_view==LIVE_FX_REVERB?reverb:
+        live.fx_view==LIVE_FX_COMP?comp:live.fx_view==LIVE_FX_COMP_DETAIL?detail:gesture;
     int k;
     for(k=0;k<4;++k) {
         pref_t r=live_ref(ui.part,k);
@@ -106,7 +109,7 @@ static void draw_live_fx(int offset)
 static void draw_live_device(int offset)
 {
     static const char *const bass_sound[4]={"CUT","RES","ENV","DEC"};
-    static const char *const bass_extra[4]={"ACC","WAVE","DRIVE","TYPE"};
+    static const char *const bass_extra[4]={"ACC","WAVE","DRIVE","TRANS"};
     static const char *const drum_sound[4]={"TUNE","CHAR","DEC","DRIVE"};
     static const char *const drum_extra[4]={"LEV","PAN","REV","DLY"};
     const char *const *labels=is_drum()?(live_layer()==LIVE_EXTRA?drum_extra:drum_sound):
@@ -116,6 +119,17 @@ static void draw_live_device(int offset)
         int x=k*60,value,applied,y;char num[28],unit[28];
         pref_t r=live_ref(ui.part,k);
         const x0x_param_t *d=pref_desc(r);
+        if(!is_drum() && live_layer()==LIVE_EXTRA && k==2){
+            int position=live_drive_value(ui.part);
+            live_text(x+3,77,54,&FONT_P20,"DRIVE",C_GRAY,offset);
+            live_text(x+3,105,54,&FONT_P20,!position?"OFF":position<64?"SOFT":"RAT",part_col(),offset);
+            y=132+(127-position)*38/127;
+            cv_rect(x+27,132-offset,6,39,C_LINE);
+            cv_rect(x+27,y-offset,6,171-y,part_col());
+            cv_rect(x+18,y-2-offset,24,4,C_WHITE);
+            put_i(num,position);live_value_right(x+3,174,54,&FONT_P36,num,C_WHITE,offset);
+            continue;
+        }
         live_text(x+3,77,54,&FONT_P20,labels[k],C_GRAY,offset);
         if(!d){live_value_right(x+3,174,54,&FONT_P20,"--",C_DIM,offset);continue;}
         value=pref_get(r);
@@ -132,9 +146,15 @@ static void draw_live_device(int offset)
             }else{
                 y=107+(d->max?((d->max-value)*63/d->max):63);
                 cv_rect(x+27,107-offset,6,64,C_LINE);
-                cv_rect(x+27,y-offset,6,171-y,part_col());
+                if(r.kind==R_BTRANS){
+                    const int center=107+63/2;
+                    cv_rect(x+15,center-offset,30,1,C_GRAY);
+                    if(y<center)cv_rect(x+27,y-offset,6,center-y,part_col());
+                    else cv_rect(x+27,center-offset,6,y-center+1,part_col());
+                }else cv_rect(x+27,y-offset,6,171-y,part_col());
                 cv_rect(x+18,y-2-offset,24,4,C_WHITE);
-                put_i(num,value);
+                if(r.kind==R_BTRANS)pref_value(r,num,unit);
+                else put_i(num,value);
             }
             live_value_right(x+3,174,54,&FONT_P36,num,C_WHITE,offset);
         }
@@ -182,7 +202,8 @@ static void draw_live_surface(void)
     uint16_t bpm_background=live_bpm_background();
     char b[28],num[28],unit[28],instrument_title[28];
     const char *title=live.mode==LIVE_MIXER?LIVE_MIX_TITLE[live.mix_control]:live.mode==LIVE_EFFECTS?
-        (live.fx_view==LIVE_FX_DELAY?"DELAY":live.fx_view==LIVE_FX_REVERB?"REVERB":"MOMENT FX"):
+        (live.fx_view==LIVE_FX_DELAY?"DELAY":live.fx_view==LIVE_FX_REVERB?"REVERB":
+        live.fx_view==LIVE_FX_COMP?"COMPRESSOR":live.fx_view==LIVE_FX_COMP_DETAIL?"COMP DETAIL":"MOMENT FX"):
         live.mode==LIVE_AUTOMATION?(ui.part==PART_303A?"AUTO A":ui.part==PART_303B?"AUTO B":ui.part?"AUTO 808":"AUTO 909"):
         live.mode==LIVE_DIRECTOR?"DIRECTOR":PART_N[ui.part];
     if(live.mode==LIVE_EFFECTS && live.fx_view==LIVE_FX_GESTURES && live.fx_key>=0)title=LIVE_FX_NAME[live.fx_key];

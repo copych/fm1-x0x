@@ -1,6 +1,6 @@
-# Live9 performer interface
+# Live10 performer interface
 
-Live9 starts on LIVE: one performance surface with latched sections. Select a
+Live10 starts on LIVE: one performance surface with latched sections. Select a
 section, release its button, then use the knobs and musical keys. No pagination.
 All LIVE display text is at least 20 px: labels/status 20, heading 24, values 36.
 The detailed legacy editor keeps its original layout and fonts.
@@ -22,8 +22,15 @@ Key numbers below count white or black keys separately, from the left.
 The four 303 knobs control cutoff, resonance, envelope modulation and decay.
 Continuous instrument controls use sliders in K1–K4 order; numbers are
 right-aligned. Named choices such as waveform remain text.
-Tap EDIT again for accent, waveform, drive and drive type; again returns to the
+Tap EDIT again for accent, waveform, combined drive and transpose; again returns to the
 native controls. Independent patches and levels remain independent.
+Tapping the selected part's black key repeats the EDIT action. In Mixer, black
+keys retain their mute function. Transpose is −24..+24 semitones on the current
+303 pattern; linked selection adjusts both, without rewriting notes.
+
+DRIVE 0 is off, 1–63 spans SOFT 1–127, and 64–127 spans RAT 1–127.
+Only RAT has a soft toe: positions 64–68 give RAT amounts 1–5; position 69
+gives 6, then the range scales up to RAT 127 at position 127.
 
 The first six white keys on a 303 apply small relative sound macros: Dry,
 Squelch, Bite, Dub, Thin and Wide. Changes are bounded by each control's range.
@@ -126,7 +133,8 @@ mutation off, a normal 909 clock pattern, and no legacy song/chaining.
 
 ## Momentary FX
 
-Tap FX for Momentary. Further FX taps cycle Delay, Reverb and Momentary.
+Tap FX for Momentary. Further FX taps cycle Delay, Reverb, Compressor,
+Comp Detail and Momentary.
 SELECT also cycles these views; HOME + SELECT changes tempo here.
 Hold a white key in any FX view; release it to return to the live signal.
 
@@ -135,6 +143,11 @@ Hold a white key in any FX view; release it to return to the live signal.
 | Momentary | DJ filter | Pump | Delay feedback | Reverb return |
 | Delay | Time division | Feedback | Tone | Return level |
 | Reverb | Decay | Tone | Low cut | Return level |
+| Compressor | Amount | Attack | Release | Dry/wet mix |
+| Comp Detail | Threshold | Ratio | Makeup | Kick pump |
+
+Compressor Amount is a macro that changes threshold, ratio and makeup together;
+use Comp Detail for individual adjustments afterward.
 
 ![Delay controls](img/performer/delay.png)
 

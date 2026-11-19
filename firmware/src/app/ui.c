@@ -87,7 +87,7 @@ enum eLiveSolo { LIVE_SOLO_NONE, LIVE_SOLO_PART, LIVE_SOLO_INSTRUMENT, LIVE_SOLO
 enum eLiveEffect { LIVE_FX_NONE = -1, LIVE_FX_LOWPASS, LIVE_FX_HIGHPASS, LIVE_FX_PUMP, LIVE_FX_DRIVE,
     LIVE_FX_TAPE, LIVE_FX_CHOP, LIVE_FX_REPEAT8, LIVE_FX_REPEAT16, LIVE_FX_REPEAT32, LIVE_EFFECTS_COUNT };
 enum eLiveMode { LIVE_INSTRUMENT, LIVE_MIXER, LIVE_EFFECTS, LIVE_AUTOMATION, LIVE_DIRECTOR, LIVE_MODES_COUNT };
-enum eLiveFxView { LIVE_FX_GESTURES, LIVE_FX_DELAY, LIVE_FX_REVERB, LIVE_FX_VIEWS_COUNT };
+enum eLiveFxView { LIVE_FX_GESTURES, LIVE_FX_DELAY, LIVE_FX_REVERB, LIVE_FX_COMP, LIVE_FX_COMP_DETAIL, LIVE_FX_VIEWS_COUNT };
 enum eLiveMixControl { LIVE_MIX_LEVEL, LIVE_MIX_PAN, LIVE_MIX_REVERB, LIVE_MIX_DELAY, LIVE_MIX_CONTROLS_COUNT };
 static const uint8_t LIVE_MIX_PARAM[LIVE_MIX_CONTROLS_COUNT]={MX_LEVEL,MX_PAN,MX_REV,MX_DLY};
 enum eLiveDepthPreset { LIVE_DEPTH_SHALLOW, LIVE_DEPTH_MEDIUM, LIVE_DEPTH_DEEP, LIVE_DEPTH_PRESETS_COUNT };
@@ -832,6 +832,28 @@ static enum eLiveLayer live_layer(void)
     if (live.mode==LIVE_AUTOMATION) return LIVE_SOUND;
     return live.extra ? LIVE_EXTRA : LIVE_SOUND;
 }
+/* LIVE's combined drive is a view over existing, separately stored DSP pots. */
+static int live_drive_value(int part)
+{
+    int voice=part-NKIT,amount=proj.sound.v[T_303][voice][BASS303_DRIVE];
+    int type=proj.sound.v[T_303][voice][BASS303_DRVTYPE],rank;
+    if(!amount || type==BASS303_DRV_OFF)return 0;
+    rank=type==BASS303_DRV_RAT?(amount<=5?amount:6+((amount-6)*58+60)/121):
+        1+((amount-1)*62+63)/126;
+    return type==BASS303_DRV_RAT?63+rank:rank;
+}
+static void live_drive_set(int part,int position)
+{
+    int voice=part-NKIT,rank,amount,type;
+    if(position<0)position=0;
+    if(position>127)position=127;
+    type=!position?BASS303_DRV_OFF:position<64?BASS303_DRV_SOFT:BASS303_DRV_RAT;
+    rank=position<64?position:position-63;
+    amount=!position?0:type==BASS303_DRV_SOFT?1+(rank-1)*126/62:
+        rank<=5?rank:6+(rank-6)*121/58;
+    pref_set(PR(R_ENG,T_303,voice,BASS303_DRIVE),amount);
+    pref_set(PR(R_ENG,T_303,voice,BASS303_DRVTYPE),type);
+}
 static pref_t live_ref(int part, int knob)
 {
     enum eLiveLayer layer = live_layer();
@@ -842,6 +864,10 @@ static pref_t live_ref(int part, int knob)
         if(live.mode==LIVE_EFFECTS && live.fx_view!=LIVE_FX_GESTURES){
             static const uint8_t delay[4]={FX_DL_TIME,FX_DL_FDBK,FX_DL_TONE,FX_DL_LEVEL};
             static const uint8_t reverb[4]={FX_RV_DECAY,FX_RV_TONE,FX_RV_HPF,FX_RV_LEVEL};
+            static const uint8_t comp[4]={MST_COMP1,MST_ATTACK,MST_RELEASE,MST_MIX};
+            static const uint8_t detail[4]={MST_THRESH,MST_RATIO,MST_MAKEUP,MST_PUMP};
+            if(live.fx_view==LIVE_FX_COMP || live.fx_view==LIVE_FX_COMP_DETAIL)
+                return PR(R_ENG,T_MST,0,(live.fx_view==LIVE_FX_COMP?comp:detail)[knob]);
             return PR(R_ENG,T_FX,0,(live.fx_view==LIVE_FX_DELAY?delay:reverb)[knob]);
         }
         if (knob < 2) return PR(R_ENG, T_MST, 0, knob ? MST_PUMP : MST_DJF);
@@ -862,7 +888,8 @@ static pref_t live_ref(int part, int knob)
         return PR(R_GEN,part-NKIT,0,knob);
     }
     if (part >= NKIT) {
-        static const uint8_t extra[4] = {BASS303_ACCENT,BASS303_WAVE,BASS303_DRIVE,BASS303_DRVTYPE};
+        static const uint8_t extra[3] = {BASS303_ACCENT,BASS303_WAVE,BASS303_DRIVE};
+        if(layer==LIVE_EXTRA && knob==3)return PR(R_BTRANS,part-NKIT,0,0);
         return PR(R_ENG,T_303,part-NKIT,layer == LIVE_EXTRA ? extra[knob] : knob);
     }
     if (layer == LIVE_EXTRA) {

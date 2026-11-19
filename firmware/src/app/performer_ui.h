@@ -66,6 +66,13 @@ static void live_solo(enum eLiveSolo kind, int target)
         seq.vmute |= (((1u << NDRUM) - 1u) & ~(1u << target)) << (ui.part * NDRUM);
     }
 }
+static void live_edit_select(void)
+{
+    live_fx_release();live_note_release();
+    if(live.mode==LIVE_INSTRUMENT)live.extra^=1;
+    else live.extra=0;
+    live.mode=LIVE_INSTRUMENT;build_pages();
+}
 static int live_key(int black, int white, int key, int down)
 {
     if (black >= 0) {
@@ -79,7 +86,8 @@ static int live_key(int black, int white, int key, int down)
             ui.btn_used |= 1u << B_REC; live_solo(LIVE_SOLO_PART,black);
         } else {
             if (ui.btn & (1u << B_SEL)) ui.btn_used |= 1u << B_SEL;
-            live_select(black,(ui.btn & (1u << B_SEL)) != 0);
+            if(!(ui.btn&(1u<<B_SEL)) && black==ui.part)live_edit_select();
+            else live_select(black,(ui.btn & (1u << B_SEL)) != 0);
         }
         return 1;
     }
@@ -195,7 +203,7 @@ static int live_button(int b)
 {
     if (b==B_EDIT || b==B_LFO || b==B_FX || b==B_ENV) {
         live_fx_release(); live_note_release();
-        if(b==B_EDIT) { if(live.mode==LIVE_INSTRUMENT)live.extra^=1; else live.extra=0; live.mode=LIVE_INSTRUMENT; }
+        if(b==B_EDIT) {live_edit_select();return 1;}
         else if(b==B_LFO) {
             if(live.mode==LIVE_MIXER)live_mix_cycle(1);
             else {live.mode=LIVE_MIXER;live.mix_control=LIVE_MIX_LEVEL;}
@@ -309,6 +317,13 @@ static void live_knob(int knob, int delta)
     }
     if(live.mode==LIVE_DIRECTOR) {
         pref_t r=PR(R_DGEN,live.mix_kit,0,knob); pref_set(r,pref_get(r)+delta); return;
+    }
+    if(live.mode==LIVE_INSTRUMENT && layer==LIVE_EXTRA && focus>=NKIT && knob==2){
+        for(p=NKIT;p<LIVE_TARGETS;++p)if(live.selected&(1u<<p))
+            live_drive_set(p,live_drive_value(p)+delta);
+        ui.touched=(int8_t)knob;ui.touch_until=plat_ms()+900u;
+        ui.btn_used|=ui.btn&(1u<<B_EDIT);
+        return;
     }
     if (d && !d->names && d->max >= 24) step = accel(EN_K1+knob,delta,d->max);
     else step = delta > 0 ? 1 : -1;

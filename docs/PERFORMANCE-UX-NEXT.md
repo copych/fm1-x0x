@@ -316,3 +316,69 @@ emulator via `X0X_VERSION=1.2.1-live9 tools/build-emu-wsl.sh` (Emscripten 3.1.69
 After approval, exercise FX view cycling in both directions, time division
 bounds, each return control, held gestures/release across views, manual sound
 and mute preservation, plus the earlier Auto/Director/navigation/FX scenarios.
+
+## Unbuilt follow-up: compressor, combined 303 DRIVE and repeated selection
+
+Baseline: published live9, application `2b570c9`, source/docs `81506e1`.
+FM-1/AC79, existing JieLi/SDK and 44.1 kHz audio execution model retained.
+Changed functions are main-loop UI mapping, drawing and gesture handlers in
+`ui.c`, `live_surface.h`, `performer_ui.h`. Audio render/DSP unchanged; previous
+live9 image/RAM/pool numbers above are baseline only, not new measurements.
+
+- FX/SELECT cycles Momentary, Delay, Reverb, Compressor, Comp Detail.
+  Compressor K1–K4: amount macro, attack, release, dry/wet mix.
+  Comp Detail K1–K4: threshold, ratio, makeup, kick pump. The amount macro
+  intentionally updates threshold/ratio/makeup through the existing setter;
+  subsequent individual edits remain possible. Existing saved parameters reused.
+- LIVE 303 extra controls: Accent, Wave, combined Drive, Slide. No separate
+  type chooser on LIVE. Combined position 0 bypasses; 1–63 uses SOFT amounts
+  `1 + floor((position-1)*126/62)`; 64–127 uses RAT, rank `position-63`.
+  RAT ranks 1–5 map 1:1; ranks 6–64 map `6+floor((rank-6)*121/58)`.
+  Examples: position 1→SOFT1, 63→SOFT127, 64→RAT1, 68→RAT5,
+  69→RAT6, 127→RAT127. Only RAT has the soft toe, per user correction.
+  Existing DSP type/amount fields remain stored separately; loading old settings
+  does not rewrite them. The combined display uses the nearest representable
+  position. Turning Drive writes both existing parameters; linked 303s receive
+  relative changes independently. No added encoder acceleration skips the toe.
+  Switching at 63/64 intentionally changes SOFT127 to RAT1; audible behavior
+  and the existing two-command publication at that boundary require validation.
+- Unmodified repeated selection of the focused black key calls the same EDIT
+  helper: enter native sound from another mode, then toggle native/extra.
+  Selecting another part still enters its native controls; SEL linking, HOME
+  mutes, REC solos and Mixer black-key mutes retain priority.
+
+| Compliance category | Status and evidence |
+| --- | --- |
+| Target / build / ABI | UNVERIFIED — no build authorized for this follow-up. |
+| Audio hot path / numerics | PASS for source scope — integer mapping outside audio, existing DSP setters/processing reused, no renderer edits. |
+| Execution ownership / synchronization | PASS for existing structural ownership — main-loop handlers use existing pref setters/command queue and bounded part loops; paired parameter audible behavior UNVERIFIED. |
+| Memory / storage / I/O | UNVERIFIED for new target image/stack; no dynamic allocation, new audio buffers, storage fields or I/O added. |
+| Dependencies / includes / licenses | PASS — no new dependencies/includes/assets, existing notices retained. |
+| Compatibility / package / recovery | PASS for unchanged storage/package contracts; native legacy pots retained. Device installation/recovery UNVERIFIED. |
+| Host functional validation | UNVERIFIED — no tests run. After approval, sweep all 128 Drive positions/inverse readback, boundaries and linked settings, compressor macro/detail/save restoration, repeated-key modes and modifier priorities. |
+| Hardware real-time validation | UNVERIFIED — no hardware flashed/measured; listen for boundary clicks and verify encoder response, worst load and headroom after authorization. |
+
+Not rebuilt, captured, published or tested. Public/local served artifacts remain
+live9; this section describes source changes for a future build.
+
+### 303 extra K4: transpose instead of slide
+
+The freed fourth control is now TRANS, −24..+24 semitones, beside Accent,
+Wave and combined Drive. It reuses the existing per-303 current-pattern
+`R_BTRANS` field (stored 0..48, center 24). Notes are not rewritten. Display
+uses a centered bipolar vertical slider and signed right-aligned values;
+linked selection adjusts each selected 303 relative to its existing transpose.
+The existing sequencer applies transpose at note events and clamps the result
+to MIDI 0..127, including outgoing sequencer MIDI. It does not instantly retune
+an already held note, and does not transpose incoming MIDI performance notes.
+Pattern save/load and musical capture retain their existing transpose behavior.
+
+Source-only mapping/drawing change in `ui.c` and `live_surface.h`; main-loop
+getter/setter path and existing shared pattern ownership retained. No sequencer,
+DSP, queue, format, allocation, dependencies, includes or license changes.
+Compliance: audio-path/numerics, existing ownership, dependencies/licenses and
+unchanged format/package contracts PASS for inspected source scope. Build/ABI,
+new linker/stack totals, host behavior, physical recovery and hardware real-time
+validation remain UNVERIFIED. No builds/tests/captures/publication run.
+After approval, check −24/0/+24, signed display/center, independent and linked
+303 edits, pattern switching/save/load/LIKE/RETURN, and note-range clipping.
