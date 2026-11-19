@@ -2,7 +2,8 @@
 
 Source changes on top of released live6 (5031e10), prepared for 1.2.1-live7.
 Build results are recorded below. Tests were explicitly excluded by the user.
-The installed firmware and public browser emulator still use live6 navigation.
+Published firmware and the public browser emulator remain live6. This local
+live7 build contains the new behavior and has not been tested.
 
 ## Performance is home
 
@@ -104,7 +105,7 @@ queue payload changes; the SDK ABI and persistent formats do not.
 
 | Category | Status / evidence |
 | --- | --- |
-| Target / build / ABI | UNVERIFIED pending the requested build. Tests are intentionally excluded. SDK ABI/build files unchanged. |
+| Target / build / ABI | PASS for compilation/package scope: live7 built with the matched toolchain/SDK and retained manifest, size, register and loader checks. Tests are intentionally excluded. |
 | Audio hot path / numerics | PASS for source bounds/structure: normalized radius precomputed on commands, fixed eight-slot scans, existing tick clamps, bounded stereo gate/envelope/interpolation. Chopper reciprocal is once per block, not per sample. No allocation/I/O/logging/waits/double/math-library additions. Wave*radius fits int32. Generated code/cycle cost remains UNVERIFIED. |
 | Execution ownership / synchronization | PASS for source scope: UI remains on main; complete start/depth updates use the existing SPSC queue. Renderer owns lane writes; depth-only updates retain base/phase. |
 | Memory / storage / I/O | UNVERIFIED for target totals/stack. Source budget: bounded 28-byte title buffer on UI stack, one extra radius byte per lane (8 pool bytes), one mixer-selection byte, bounded beat-display state, and 12 bytes of audio FX counter/phase/gain fields. No extra canvas/audio buffers, persistent state or storage operations. |
@@ -129,3 +130,29 @@ changes; check full-band audio during open gates and release at every phase.
 Verify tape speed reaches zero at 400 ms, stays silent while held, remains
 audible during the early slowdown, and safely wraps the capture read head.
 Run browser waveform/duration assertions and listen after build approval.
+
+## Live7 build results — no tests run
+
+Firmware source checkpoint: `c757989` (documentation-only build records may follow).
+Built using `tools/build-fm1-wsl.sh --release 1.2.1-live7` with the existing
+matched JieLi toolchain and AC79 SDK. No native, browser, functional, regression,
+listening or hardware tests were run for this build, as requested.
+
+- Emulator: 526356-byte WASM, compiled with X0X_VERSION=1.2.1-live7 via
+  tools/build-emu-wsl.sh. It was not launched or exercised.
+- Target app: 440540 bytes.
+- Firmware package: 609682 bytes, identity FM-1_9010201.
+- Package: build/x0x-1.2.1-live7.fwsc.
+- SHA-256: 751774c28759275f0334de1742b4d8adf7e0caa72ef206487bdc048bb8979fa1.
+- Ordinary RAM: 96428 / 98304 bytes (1876 free).
+- Pool: 331752 / 344064 bytes (12312 free), retaining the 8192-byte reserve
+  and leaving 4120 allocatable bytes above it.
+- Build checks: 909 call-free RAM-code instructions, no software-double
+  routines, register access confined to HAL, loader/package checks retained.
+
+These are build/link observations, not runtime evidence. Memory totals PASS for
+static linker scope; peak stack remains UNVERIFIED. Source-level bounds and
+ownership review are recorded above; new DSP instruction cost, behavior, audible
+quality, navigation and hardware deadlines remain UNVERIFIED until tests are
+separately authorized. Storage formats, dependencies and licenses are unchanged;
+actual installation/recovery remains UNVERIFIED. Nothing was flashed.
