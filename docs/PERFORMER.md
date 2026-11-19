@@ -1,6 +1,6 @@
-# Live8 performer interface
+# Live9 performer interface
 
-Live8 starts on LIVE: one performance surface with latched sections. Select a
+Live9 starts on LIVE: one performance surface with latched sections. Select a
 section, release its button, then use the knobs and musical keys. No pagination.
 All LIVE display text is at least 20 px: labels/status 20, heading 24, values 36.
 The detailed legacy editor keeps its original layout and fonts.
@@ -57,6 +57,8 @@ that drum with a white key first. Part pan/sends are the Mixer cycles above.
 
 
 Tap ENV once. Knobs select target control, depth, cycle length and shape.
+All four controls run left to right in K1–K4 order. Depth has a vertical slider;
+the shape control shows its contour. Director uses the same four-column layout.
 Cycle lengths: 1, 2, 4 or 8 bars. The target is one of the selected instrument's
 four native sound controls. Drum parameters without a numeric control are ignored.
 
@@ -124,7 +126,19 @@ mutation off, a normal 909 clock pattern, and no legacy song/chaining.
 
 ## Momentary FX
 
-Tap FX once. Hold a white key; release it to return to the live signal.
+Tap FX for Momentary. Further FX taps cycle Delay, Reverb and Momentary.
+SELECT also cycles these views; HOME + SELECT changes tempo here.
+Hold a white key in any FX view; release it to return to the live signal.
+
+| FX view | K1 | K2 | K3 | K4 |
+| --- | --- | --- | --- | --- |
+| Momentary | DJ filter | Pump | Delay feedback | Reverb return |
+| Delay | Time division | Feedback | Tone | Return level |
+| Reverb | Decay | Tone | Low cut | Return level |
+
+![Delay controls](img/performer/delay.png)
+
+![Reverb controls](img/performer/reverb.png)
 
 | White key | Gesture |
 | --- | --- |
@@ -134,8 +148,7 @@ Tap FX once. Hold a white key; release it to return to the live signal.
 | 7 / 8 / 9 | Captured audio repeat at 1/8 / 1/16 / 1/32 |
 
 One momentary effect is active at a time. Changing section/target or turning a
-knob releases it. FX knobs remain master filter, pump, delay feedback and reverb
-return level. The gestures currently target the master mix; per-target repeat
+knob releases it. The gestures currently target the master mix; per-target repeat
 and drum-only DJ filtering are not yet provided.
 
 Repeats capture the real stereo sound after the master processing. Audio capture

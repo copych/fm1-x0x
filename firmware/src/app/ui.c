@@ -87,12 +87,13 @@ enum eLiveSolo { LIVE_SOLO_NONE, LIVE_SOLO_PART, LIVE_SOLO_INSTRUMENT, LIVE_SOLO
 enum eLiveEffect { LIVE_FX_NONE = -1, LIVE_FX_LOWPASS, LIVE_FX_HIGHPASS, LIVE_FX_PUMP, LIVE_FX_DRIVE,
     LIVE_FX_TAPE, LIVE_FX_CHOP, LIVE_FX_REPEAT8, LIVE_FX_REPEAT16, LIVE_FX_REPEAT32, LIVE_EFFECTS_COUNT };
 enum eLiveMode { LIVE_INSTRUMENT, LIVE_MIXER, LIVE_EFFECTS, LIVE_AUTOMATION, LIVE_DIRECTOR, LIVE_MODES_COUNT };
+enum eLiveFxView { LIVE_FX_GESTURES, LIVE_FX_DELAY, LIVE_FX_REVERB, LIVE_FX_VIEWS_COUNT };
 enum eLiveMixControl { LIVE_MIX_LEVEL, LIVE_MIX_PAN, LIVE_MIX_REVERB, LIVE_MIX_DELAY, LIVE_MIX_CONTROLS_COUNT };
 static const uint8_t LIVE_MIX_PARAM[LIVE_MIX_CONTROLS_COUNT]={MX_LEVEL,MX_PAN,MX_REV,MX_DLY};
 enum eLiveDepthPreset { LIVE_DEPTH_SHALLOW, LIVE_DEPTH_MEDIUM, LIVE_DEPTH_DEEP, LIVE_DEPTH_PRESETS_COUNT };
 static const uint8_t LIVE_DEPTH_PRESET[LIVE_DEPTH_PRESETS_COUNT]={16,32,48};
 static struct {
-    uint8_t mode, extra, mix_kit, mix_control, auto_parameter, auto_depth, auto_period, auto_shape;
+    uint8_t mode, extra, mix_kit, mix_control, fx_view, auto_parameter, auto_depth, auto_period, auto_shape;
     uint8_t selected, capture_mask, capture_action, solo_kind, solo_target, restore_valid;
     uint8_t capture_pat[LIVE_TARGETS];
     int8_t fx_key, held_note;
@@ -838,6 +839,11 @@ static pref_t live_ref(int part, int knob)
     int v = part < NKIT ? ui.sel[part] : part - NKIT;
     if (live.mode==LIVE_DIRECTOR) return knob<2 ? PR(R_DGEN,live.mix_kit,0,knob) : PR(R_NONE,0,0,0);
     if (layer == LIVE_MASTER) {
+        if(live.mode==LIVE_EFFECTS && live.fx_view!=LIVE_FX_GESTURES){
+            static const uint8_t delay[4]={FX_DL_TIME,FX_DL_FDBK,FX_DL_TONE,FX_DL_LEVEL};
+            static const uint8_t reverb[4]={FX_RV_DECAY,FX_RV_TONE,FX_RV_HPF,FX_RV_LEVEL};
+            return PR(R_ENG,T_FX,0,(live.fx_view==LIVE_FX_DELAY?delay:reverb)[knob]);
+        }
         if (knob < 2) return PR(R_ENG, T_MST, 0, knob ? MST_PUMP : MST_DJF);
         return PR(R_ENG, T_FX, 0, knob == 2 ? FX_DL_FDBK : FX_RV_LEVEL);
     }
@@ -2696,6 +2702,7 @@ static void input(void)
         if (live.mode!=LIVE_EFFECTS && !(ui.btn & (1u << B_FX))) live_fx_release();
         if ((e = enc(EN_SELECT)) != 0) {
             if(live.mode==LIVE_MIXER && !(ui.btn & (1u<<B_HOME))) live_mix_cycle(e);
+            else if(live.mode==LIVE_EFFECTS && !(ui.btn & (1u<<B_HOME))) {live_fx_release();live_fx_cycle(e);}
             else {
                 float bpm = seq.bpm + (float)e;
                 seq.bpm = bpm < 20.0f ? 20.0f : bpm > 275.0f ? 275.0f : bpm; mark_dirty();
@@ -4864,6 +4871,7 @@ void ui_init(void)
     live.mode=LIVE_INSTRUMENT; live.extra=live.mix_kit=live.auto_parameter=live.auto_period=live.auto_shape=0;
     live.auto_depth=LIVE_DEPTH_PRESET[LIVE_DEPTH_MEDIUM];
     live.mix_control=LIVE_MIX_LEVEL;
+    live.fx_view=LIVE_FX_GESTURES;
     live.solo_kind = live.restore_valid = 0; live.fx_key = live.held_note = -1;
     ui.held_step = -1;
     ui.brk_held = -1;

@@ -1,79 +1,136 @@
-# X0X Live for the M-VAVE FM-1
+# X0X Live for M-VAVE FM-1
 
-Turn your FM-1 into an instrument for live generative acid performance. Discover a bassline, develop it while it plays, bring in drums, and shape the sound with your hands. Two independent 303s, 909 and 808 drum machines, and a single LIVE screen keep musical changes, sound controls and mixing close together.
+An alternative FM-1 firmware for making acid music as you play. Discover a
+bassline, keep an idea you like, develop it, bring in drums and direct the next
+break or drop. Two independent 303s, 909 and 808 drums, hands-on sound controls
+and performance effects share one LIVE interface.
 
-**Current version: 1.2.1-live7 — experimental, built without running tests.** This fork builds on X0X 1.2.1. The new performance workflow has not yet been validated on an actual FM-1.
+**Current version: 1.2.1-live9 · experimental.** Hardware validation is pending.
 
-- **[Try the browser emulator](https://copych.github.io/fm1-x0x/emu/)** — no hardware needed.
-- **[Install on your FM-1](https://copych.github.io/fm1-x0x/install/)** — Chrome or Edge, over USB.
-- **[Performer controls](https://copych.github.io/fm1-x0x/performance/)** — complete gestures and screenshots.
-- **[Download live7 firmware](https://copych.github.io/fm1-x0x/firmware/x0x-1.2.1-live7.fwsc)**.
+**[Play in your browser](https://copych.github.io/fm1-x0x/emu/)** ·
+**[Install on FM-1](https://copych.github.io/fm1-x0x/install/)** ·
+**[Full controls guide](https://copych.github.io/fm1-x0x/performance/)** ·
+**[Download firmware](https://copych.github.io/fm1-x0x/firmware/x0x-1.2.1-live9.fwsc)**
 
-![LIVE performer screen](docs/img/performer/live.png)
+## What it does
 
-## What you can play
+- **Two acid voices.** Independent 303 patches with cutoff, resonance, envelope,
+  decay, accent, waveform and drive, plus pan and effect sends.
+- **Generate, keep, develop.** Discover phrases, LIKE an idea, explore variations
+  and RETURN to it. Musical undo keeps your later sound changes.
+- **Generative drums.** 909 and 808 kits with eleven instruments each. Weird and
+  Full move a groove from sparse and straight to busy and adventurous. Kick and
+  hats start audible; bring in other instruments with the keys.
+- **Direct the performance.** Queue INTRO, GROOVE, BUILD, BREAK, BRIDGE, DROP or
+  OUTRO. Extend or shorten the current segment by a bar. The Director prototype
+  can prepare a complementary 303 B phrase and coordinated drums around A.
+- **Play the mix.** Direct part and drum mutes, solo, linked selection and mix
+  restoration. Four controls always follow the physical K1–K4 order.
+- **Shape movement and space.** Bar-aligned modulation, growing and falling
+  ramps; delay and reverb controls; momentary filters, pump, drive, tape stop,
+  sixteenth-note chopper and captured audio repeats.
 
-- **Two acid voices:** independent 303 synthesis, cutoff, resonance, envelope, decay, accent, waveform, drive, pan and effect sends.
-- **Generate and develop:** find a new phrase, explore related variations, LIKE an idea and RETURN to it. Musical undo restores notes and hits while keeping your current sound and mute choices.
-- **A Musical Director prototype:** keep 303 A as the lead and ask for a related response from B and a coordinated drum groove at the next segment boundary (four bars by default).
-- **909 and 808 drums:** generate all eleven instrument parts. The starting mix brings in kicks and hats; unmute other instruments when you want them.
-- **Predictable drum controls:** move from Straight to Weird and Hollow to Full. Straight grooves range from a single kick with a generated crash on the first beat to four-on-the-floor kicks and sixteenth-note hats.
-- **Hands-on performance:** select several parts, turn linked controls, mute or solo tracks and individual drums, and restore a previous mix.
-- **Effects:** independent 303 drive and sends, shared delay and reverb, master filtering and kick pump. Hold keys for filtering, pump, drive, tape stop, chopper or captured stereo repeats.
+## Screens
 
-The display shows your selected parts, current controls, four-bar position and pending Director action. Detailed step editing remains available when needed. Breakbeat playback is disabled in this build to make room for the live features.
+These are screen captures from the matching emulator. Each screen is 240 × 240;
+labels stay large, controls follow the knobs from left to right, and values are
+right-aligned. Pan uses horizontal sliders.
+
+| Sound | Mixer | Pan |
+| --- | --- | --- |
+| ![303 sound controls](docs/img/performer/live.png) | ![Mixer levels](docs/img/performer/mix.png) | ![Horizontal pan controls](docs/img/performer/pan.png) |
+
+| Automation | Director | Drum instrument |
+| --- | --- | --- |
+| ![Automation controls](docs/img/performer/automation.png) | ![Musical Director](docs/img/performer/director.png) | ![Selected drum instrument](docs/img/performer/drums.png) |
+
+| Momentary FX | Delay | Reverb |
+| --- | --- | --- |
+| ![Momentary effects](docs/img/performer/fx.png) | ![Delay controls](docs/img/performer/delay.png) | ![Reverb controls](docs/img/performer/reverb.png) |
 
 ## Install
 
-1. **Back up your current firmware's data first.** If you use Sloop, use the [Sloop editor](https://isod89.github.io/sloop-fm1/webapp/editor/). The [X0X backup page](https://copych.github.io/fm1-x0x/backup/) only handles X0X projects. Keep the firmware and restore instructions for your current setup.
-2. Connect the FM-1 with a USB data cable. Close other MIDI applications and editor tabs.
-3. Open the **[web installer](https://copych.github.io/fm1-x0x/install/)** in desktop Chrome or Edge. Allow MIDI / SysEx access when asked.
-4. Follow the device connection and installation steps. Keep USB connected until the update finishes and the instrument restarts.
-5. The firmware opens on the **LIVE** performer screen.
+1. **Back up first.** For Sloop, use the [Sloop editor](https://isod89.github.io/sloop-fm1/webapp/editor/).
+   The [X0X backup page](https://copych.github.io/fm1-x0x/backup/) handles X0X
+   projects only. Keep your previous firmware and its recovery instructions.
+2. Connect the FM-1 with a USB data cable. Close other MIDI apps and editor tabs.
+3. Open the [web installer](https://copych.github.io/fm1-x0x/install/) in desktop
+   Chrome or Edge and allow MIDI / SysEx access when asked.
+4. Follow the connection and installation instructions. Keep USB connected
+   until the update completes and the instrument restarts.
+5. Start playing on LIVE.
 
-The installer checks device and package identity. If it cannot find your device, check its connection rather than bypassing those checks. Switching directly from every alternative firmware, including Sloop, is not yet verified. For recovery, see the [base manual](https://copych.github.io/fm1-x0x/manual/#recovering-an-fm-1-that-won-t-start).
+Direct switching from every alternative firmware, including Sloop, is not yet
+verified. If the instrument will not start, see the
+[recovery instructions](https://copych.github.io/fm1-x0x/manual/#recovering-an-fm-1-that-won-t-start).
 
 ## Your first groove
 
-1. On the initial **303 A** selection, press **OCT+** to make a phrase, then **PLAY**.
-2. Tap **ARP** to select Director, then tap **ARP again** for a complementary B phrase and drums. During playback it applies at the next segment boundary; tap ARP again to cancel.
-3. Turn the four knobs for **cutoff, resonance, envelope modulation and decay**.
-4. Use the first four **black keys** to select **909 / 808 / 303 A / 303 B**. Hold **SEL** while selecting to link several parts.
-5. Select a drum kit, then tap **ARP**: knobs 1 and 2 control **Weird** and **Full**. In the instrument section, white keys select drum instruments.
+1. Start with **303 A** selected. Press **OCT+** to generate a phrase, then **PLAY**.
+2. Turn **K1–K4** for cutoff, resonance, envelope modulation and decay.
+3. Tap **ARP** for Director, then **ARP again** to request a related B phrase and
+   drum groove. During playback it arrives at the next segment boundary.
+4. Press **SEQ** to LIKE selected musical material. Use **OCT−** to develop it;
+   **GLO** returns to the capture. **REC** undoes the last musical change.
+5. Tap **LFO** for Mixer. Black keys mute/unmute parts; white keys mute/unmute
+   individual drums. **PRESETS** switches the focused 909/808 kit.
+6. Tap **FX**, then hold white keys for momentary effects. Release to return.
 
-| Gesture in LIVE | Action |
+## Find your controls
+
+| Button | What you get |
 | --- | --- |
-| OCT+ / OCT- | New material / develop or vary selected material |
-| ENV + OCT+ / LFO + OCT- | LIKE / RETURN |
-| REC tap / REC + OCT+ | Musical undo / redo |
-| HOME + black key | Mute or unmute a part |
-| HOME + white key, drum kit selected | Mute or unmute a drum instrument |
-| REC + black or white key | Solo a part or drum instrument |
-| HOME + SEL | Restore the captured mix |
-| EDIT, then knobs | Instrument controls; tap EDIT again for additional sound controls |
-| LFO taps / SELECT in Mixer | Cycle four sliders through Level, Pan, Reverb and Delay |
-| FX, then knobs | Master filter, pump, delay feedback, reverb level |
-| FX, then hold white 1–9 | Filters, pump, drive, tape stop, chopper, repeats |
-| ENV | Latched automation: 3 depths of modulation, growing and falling saws |
-| ARP | Director: section queues, +/-1 bar and coordinated phrases |
-| HOME + SELECT in Mixer | Tempo; SELECT elsewhere in LIVE also changes tempo |
-| SAVE | Save the project |
-| HOME | Return to LIVE; in LIVE, return to instrument controls |
+| **EDIT** | Selected instrument's sound; tap again for extra controls |
+| **LFO** | Mixer; repeated taps cycle Level, Pan, Reverb send, Delay send |
+| **FX** | Momentary, Delay and Reverb views; repeated taps cycle them |
+| **ENV** | Automation: destination, depth, bars and shape |
+| **ARP** | Director: Weird, Full, segment length and next section |
+| **HOME** | Return to LIVE sound controls |
+| **SAVE** | Save the current project |
 
-Key numbers count white and black keys separately from the left. The [complete controls guide](https://copych.github.io/fm1-x0x/performance/) explains linked selection, solo, effect release and Director requirements.
+SELECT also cycles views inside Mixer and FX. **HOME + SELECT** changes tempo
+there; SELECT elsewhere in LIVE changes tempo directly.
 
-## What to expect from this version
+The first four **black keys** select **909 / 808 / 303 A / 303 B** outside Mixer;
+hold SEL to select several. On a drum sound screen, **white keys** select the
+instrument named in the heading. In Mixer, those keys operate mutes instead.
+Hold **REC + a musical key** for solo. **HOME + SEL** restores the captured mix.
 
-Live7 includes bar-aligned automation and queued INTRO/GROOVE/BUILD/BREAK/BRIDGE/DROP/OUTRO sections, with manual segment extension/shrinking. The LIVE display uses a 20 px minimum, 24 px headings and 36 px values. Automation joins current musical phase; a four-bar preset engaged in bar 3 resets after bar 4. Turning its sound knob takes over immediately.
+**Global FX controls:** Delay has time division, feedback, tone and return level.
+Reverb has decay, tone, low cut and return level. White keys keep their momentary
+FX gestures in all three FX views.
 
-Audio FX currently target the master. Repeat history is about 371 ms, so very slow divisions are capped. To fit the capture ring, the maximum delay buffer is reduced from 2 seconds to about 1.26 seconds. Per-target repeats and drum-only DJ filtering remain planned. See the performer guide for the exact controls and limits.
+**Automation:** K2 sets depth from 0 to 127. White keys offer three depths each
+of modulation, growing and falling ramps; cycles are 1, 2, 4 or 8 bars. A four-bar
+ramp engaged in bar 3 joins the current phase and resets after bar 4. Turn the
+sound knob to take over manually.
 
-LIKE captures musical patterns and generator settings, not synth patches or the mix. Captures, musical undo, manual mute states, section position and preset automation are session-only. SAVE keeps the project; it does not make those temporary performance memories persistent.
+For detailed editing, hold **SEL + SEQ**; for settings, **SEL + GLO**. Press
+**HOME** to come back. The [controls guide](https://copych.github.io/fm1-x0x/performance/)
+covers every key gesture, section control and automation preset.
 
-## About this fork
+## Saving and current limits
 
-Based on [X0X by Charles Vestal](https://github.com/charlesvestal/fm1-x0x), built on [Felucca by Leo Kuroshita / Hügelton Instruments](https://github.com/hugelton/Felucca). The 303s use Open303; the drums derive from [9W9](https://github.com/athousanddetails/schwung-9W9) and [8W8](https://github.com/athousanddetails/schwung-8W8). The 909 hats and cymbals use ER-99 samples by Matthew Cieplak (GPL-3.0). Generators derive from [schwung-tb3po](https://github.com/charlesvestal/schwung-tb3po). Existing DSP, sample and font credits and licenses are retained in the source and base manual.
+**SAVE** preserves the project. **LIKE** captures patterns and generator settings,
+not synth patches or the mix. Captures, musical undo, manual mutes, section
+position and automation are temporary performance state and do not survive a restart.
+Named scene presets and a persistent favorites library are not available yet.
 
-X0X is GPL-3.0-only; Open303 is MIT and the fonts are SIL OFL 1.1. See [LICENSE](LICENSE) and the source notices. FM-1 and Roland instrument names are trademarks of their owners; this project is independent of those companies.
+Performance audio effects currently act on the master mix. Repeat history is
+about 371 ms, so longer repeats are capped. Maximum delay is about 1.26 seconds.
+Breakbeat playback is disabled in this version. The Director is an early
+prototype; the firmware has not yet been validated on physical FM-1 hardware.
 
-For development and build instructions, see [BUILDING.md](BUILDING.md).
+## Credits
+
+Based on [X0X by Charles Vestal](https://github.com/charlesvestal/fm1-x0x) and
+[Felucca by Leo Kuroshita / Hügelton Instruments](https://github.com/hugelton/Felucca).
+The acid voices use Open303; drums derive from
+[9W9](https://github.com/athousanddetails/schwung-9W9) and
+[8W8](https://github.com/athousanddetails/schwung-8W8); generation derives from
+[schwung-tb3po](https://github.com/charlesvestal/schwung-tb3po).
+909 cymbal/hat samples are ER-99 by Matthew Cieplak. Existing credits and notices
+are retained. X0X is GPL-3.0-only, Open303 is MIT and fonts are SIL OFL 1.1;
+see [LICENSE](LICENSE) and [licensing notes](LICENSING.md).
+
+This is an independent project, unaffiliated with M-VAVE or Roland.

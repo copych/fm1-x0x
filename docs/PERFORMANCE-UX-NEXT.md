@@ -237,3 +237,49 @@ run, no emulator runtime behavior was exercised, and no hardware was flashed.
 After test approval, validate four-column controls, numeric alignment, pan
 center/endpoints, held filter readback, direct LIKE/RETURN and retained modifier
 gestures, plus the earlier live7 navigation/automation/FX scenarios above.
+
+## Unbuilt follow-up: consistent Auto / Director columns and cleaner pan
+
+Baseline: live8 source `1fa8670`, build record `3655aa0`. Changes are confined to
+main-loop LIVE drawing in `live_surface.h`, with this documentation update.
+Auto now follows physical left-to-right K1 destination, K2 depth, K3 bars,
+K4 shape. Depth uses the same vertical fader as instrument/mixer controls;
+shape adds a bounded 24-point contour above its name. Director also uses four
+columns: K1 Weird, K2 Full, K3 Bars, K4 Next. Its two continuous controls have
+vertical sliders, and section choices use short names that fit at 20 px.
+The current/pending section context elsewhere retains full names.
+Pan uses a thin rail, a separate center tick and a compact inset handle;
+value 64 maps exactly to center, with both extreme handles inside the rail.
+20 px minimum fonts and right-aligned numeric readouts are retained.
+
+No build/tests requested or run for this patch; the served emulator remains
+live8. No parameter mapping, automation phase, section scheduling or DSP changes.
+
+| Compliance category | Status and evidence |
+| --- | --- |
+| Target / build / ABI | UNVERIFIED — source-only changes after live8, no compilation. |
+| Audio hot path / numerics | PASS for source scope — UI-only integer drawing, no audio-path edits. |
+| Execution ownership / synchronization | PASS for source scope — existing main-loop getters/canvas reused, four-control and 24-point bounded loops. |
+| Memory / storage / I/O | UNVERIFIED — fixed local buffers and existing canvas; new linker/stack totals unmeasured. No storage/peripheral changes. |
+| Dependencies / includes / licenses | PASS — no dependencies/assets/includes added, notice retained. |
+| Compatibility / package / recovery | PASS for unchanged persistent and loader contracts; installation/recovery UNVERIFIED. |
+| Host functional validation | UNVERIFIED — builds and tests await separate authorization. Check all columns, shape names/contours, pan center/extremes and long section choices. |
+| Hardware real-time validation | UNVERIFIED — check legibility and redraw responsiveness during loaded playback on FM-1. |
+
+## Live9 scope and pre-build review
+
+Includes the Auto/Director/pan follow-up plus latched Momentary/Delay/Reverb FX
+views. FX taps and SELECT cycle views, HOME+SELECT retains tempo, and white-key
+gestures retain their existing master targets. Four knobs reuse existing FX
+parameter references: delay time/feedback/tone/return and reverb decay/tone/HPF/
+return. Delay division uses the existing named choices. New finite view state
+uses `enum eLiveFxView` and a count sentinel, resets at initialization, remains
+session-only and is not serialized. Gesture release retains existing behavior.
+
+Source review: changes execute in the UI main loop, retain the existing command
+publication and getter mechanisms, add no DSP/math in the render path, no waits,
+allocation or I/O in audio. Loops are bounded; drawing clamps descriptor ranges.
+Dependencies/includes/licenses and storage/package contracts remain unchanged.
+Build/ABI, new linker/stack totals, functional validation and hardware timing
+are pending. Tests are explicitly excluded; documentation screenshots will be
+captured from WASM without regression assertions or audio qualification.

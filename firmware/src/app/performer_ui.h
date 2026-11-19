@@ -177,6 +177,13 @@ static void live_mix_cycle(int delta)
     if(next>=LIVE_MIX_CONTROLS_COUNT)next-=LIVE_MIX_CONTROLS_COUNT;
     live.mix_control=(uint8_t)next;
 }
+static void live_fx_cycle(int delta)
+{
+    int next=(int)live.fx_view+delta%LIVE_FX_VIEWS_COUNT;
+    if(next<0)next+=LIVE_FX_VIEWS_COUNT;
+    if(next>=LIVE_FX_VIEWS_COUNT)next-=LIVE_FX_VIEWS_COUNT;
+    live.fx_view=(uint8_t)next;
+}
 static void live_like(void)
 {
     int p;
@@ -192,7 +199,10 @@ static int live_button(int b)
         else if(b==B_LFO) {
             if(live.mode==LIVE_MIXER)live_mix_cycle(1);
             else {live.mode=LIVE_MIXER;live.mix_control=LIVE_MIX_LEVEL;}
-        } else live.mode=b==B_FX?LIVE_EFFECTS:LIVE_AUTOMATION;
+        } else if(b==B_FX){
+            if(live.mode==LIVE_EFFECTS)live_fx_cycle(1);
+            else {live.mode=LIVE_EFFECTS;live.fx_view=LIVE_FX_GESTURES;}
+        } else live.mode=LIVE_AUTOMATION;
         build_pages(); return 1;
     }
     if (b == B_HOME) {
