@@ -478,3 +478,12 @@ bounded structure, dependencies/includes/licenses PASS (no new firmware deps,
 notices retained), compatibility PASS for unchanged persistent/loader contracts.
 Target/build/ABI, updated memory/stack, complete host validation and hardware
 real-time/recovery remain UNVERIFIED until the following results are recorded.
+
+Restore ordering correction: `app_restored()` now queues gesture reset before
+applying the loaded sound, in addition to its UI initialization reset. Otherwise
+an active old filter snapshot could restore over newly loaded pots. A WASM-only
+test callback simulates storage completion at a stopped boundary before another
+render has retired the old gesture; it invokes the actual restore function.
+The regression saves filter 64, moves to 54, activates temporary LP, restores,
+and asserts both the project mirror and actual engine return to 64 with no
+active/pending effect or roll. It passes. This test hook is absent on FM-1.

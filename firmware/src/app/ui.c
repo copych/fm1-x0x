@@ -5016,6 +5016,7 @@ void ui_redraw(void)
  * playing); undo starts over from it */
 void app_restored(void)
 {
+    engine_live_reset(); /* retire old gesture snapshots before applying loaded pots */
     project_flash_changed();
     if (project_load() != 0)
         project_defaults();                      /* (as at power-on: a project that does not load whole) */

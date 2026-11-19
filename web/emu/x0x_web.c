@@ -83,6 +83,7 @@ __attribute__((used, visibility("default"))) uint32_t web_breakbeat(void) { retu
 /* Observable state for browser regressions; the same real UI/engine are driven. */
 __attribute__((used, visibility("default"))) int web_live_mode(void) { return live.mode; }
 __attribute__((used, visibility("default"))) int web_momentary(int pending) { return engine_momentary_state(pending); }
+__attribute__((used, visibility("default"))) int web_master_value(int i) { return engine_master_value(i); }
 __attribute__((used, visibility("default"))) int web_grid_step(void) { return eng_step[TRK_DRUM]; }
 __attribute__((used, visibility("default"))) int web_live_extra(void) { return live.extra; }
 __attribute__((used, visibility("default"))) int web_fx_view(void) { return live.fx_view; }
@@ -91,6 +92,9 @@ __attribute__((used, visibility("default"))) float web_chop_phase(void) { return
 __attribute__((used, visibility("default"))) int web_native_sound(int t,int v,int i) { return proj.sound.v[t][v][i]; }
 __attribute__((used, visibility("default"))) int web_drive_position(int part) { return live_drive_value(part); }
 __attribute__((used, visibility("default"))) int web_transpose(int part) { return proj.pat[seq.ppat[part+NKIT]].bass[part].transpose-24; }
+/* Test the storage-completion callback at a stopped boundary, before another
+ * render has retired the previously held gesture. No hardware flash is touched. */
+__attribute__((used, visibility("default"))) void web_test_restored(void) { seq.playing=0;app_restored(); }
 __attribute__((used, visibility("default"))) int web_section(int field) { return engine_section_value(field); }
 __attribute__((used, visibility("default"))) int web_auto_value(int t,int v,int i) { return engine_auto_value(t,v,i); }
 

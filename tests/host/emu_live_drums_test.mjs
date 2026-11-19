@@ -93,3 +93,16 @@ for(const bass of [true,false]){
  assert(peak>0.001,'audible reference');if(bass)assert.equal(diff,0,'303 is bit-identical through drum-only filter');else assert(diff>0.001,'drums are filtered');
  console.log(`drum filter routing: ${bass?'isolated 303 unchanged':'isolated drums changed'} PASS`);
 }
+{
+ const {e,tap,turn,wait,grid,until}=await boot();
+ tap(7);wait(3000); // persist default filter 64
+ tap(13);tap(10);tap(0);turn(3,-10);
+ assert.equal(e.web_native_sound(6,0,13),54);
+ e.web_keys(1<<white[0]);until(()=>e.web_momentary(0)===0);
+ e.web_test_restored();wait(100);e.web_keys(0);wait(40);
+ assert.equal(e.web_native_sound(6,0,13),64,'saved pot restored');
+ assert.equal(e.web_master_value(13),64,'old active snapshot cannot overwrite restored engine pot');
+ assert.equal(e.web_momentary(0),-1);assert.equal(e.web_momentary(1),-1);assert.equal(e.web_roll(1),0);
+ tap(0);assert.equal(e.web_live_mode(),2);
+ console.log('project restore: pending/active gestures retired before loaded pots PASS');
+}
