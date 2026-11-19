@@ -10,7 +10,7 @@ function chunk(name,data){const type=Buffer.from(name),out=Buffer.alloc(data.len
 function png(pixels){
   const raw=Buffer.alloc(240*(1+240*3));
   for(let y=0;y<240;y++)for(let x=0;x<240;x++){
-    const v=pixels[y*240+x],o=y*721+1+x*3;
+    const panel=pixels[y*240+x],v=((panel>>>8)|(panel<<8))&65535,o=y*721+1+x*3;
     raw[o]=Math.round((v>>>11)*255/31);raw[o+1]=Math.round(((v>>>5)&63)*255/63);raw[o+2]=Math.round((v&31)*255/31);
   }
   const header=Buffer.alloc(13);header.writeUInt32BE(240,0);header.writeUInt32BE(240,4);header[8]=8;header[9]=2;

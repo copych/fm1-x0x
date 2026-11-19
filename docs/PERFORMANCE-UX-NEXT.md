@@ -283,3 +283,36 @@ Dependencies/includes/licenses and storage/package contracts remain unchanged.
 Build/ABI, new linker/stack totals, functional validation and hardware timing
 are pending. Tests are explicitly excluded; documentation screenshots will be
 captured from WASM without regression assertions or audio qualification.
+
+## Live9 build and publication record
+
+Compiled application source: `2b570c9`. Subsequent capture/documentation changes
+do not change the compiled application. Built with the existing matched JieLi
+toolchain and AC79 SDK using `tools/build-fm1-wsl.sh --release 1.2.1-live9`;
+emulator via `X0X_VERSION=1.2.1-live9 tools/build-emu-wsl.sh` (Emscripten 3.1.69).
+
+- App 442704 bytes; ordinary RAM 96428 / 98304 bytes; pool 331752 / 344064,
+  preserving the 8192-byte reserve.
+- Firmware `build/x0x-1.2.1-live9.fwsc`, 609682 bytes, FM-1_9010201.
+- SHA-256 `8d2763381dc9b0cc7f73df35aac6fc458c2c220d0db5257cd32769655e8f35e7`.
+- Matching emulator 534342-byte WASM; optional page voice absent.
+- Retained build checks: 909 call-free RAM-text instructions, no soft-double
+  routines, HAL-only register access, SDK/loader/package identity/size checks.
+- Documentation captures: `node tools/capture_live_screens.mjs`; nine actual
+  240×240 WASM framebuffer PNGs. Framebuffer byte order matches the browser.
+  Captures are documentation evidence only; no functional/audio assertions run.
+
+| Compliance category | Status and evidence |
+| --- | --- |
+| Target / build / ABI | PASS for compile/link/package scope — matched toolchain/SDK and retained integrity checks above. |
+| Audio hot path / numerics | PASS for source scope — UI-only additions; audio processing unchanged, build rejects soft-double routines. |
+| Execution ownership / synchronization | PASS for source scope — bounded main-loop view/drawing logic uses existing getters and parameter publication; no new queue or ownership. |
+| Memory / storage / I/O | PASS for static linker budgets above; peak stack UNVERIFIED. Existing canvas/storage/peripheral contracts unchanged. |
+| Dependencies / includes / licenses | PASS — no firmware dependencies or assets introduced, existing notices retained; capture utility uses Node built-ins. |
+| Compatibility / package / recovery | PASS for unchanged persistent formats and retained package checks; physical installation/recovery UNVERIFIED. |
+| Host functional validation | UNVERIFIED — no test suites or audio/listening tests run; nine documentation screenshots captured and visually reviewed for publication. |
+| Hardware real-time validation | UNVERIFIED — no hardware flashed or measured; loaded playback, timing/stack/soak and recovery remain pending. |
+
+After approval, exercise FX view cycling in both directions, time division
+bounds, each return control, held gestures/release across views, manual sound
+and mute preservation, plus the earlier Auto/Director/navigation/FX scenarios.
