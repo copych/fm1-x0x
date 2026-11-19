@@ -52,6 +52,7 @@ enum eLiveSection { SECTION_INTRO, SECTION_GROOVE, SECTION_BUILD, SECTION_BREAK,
     SECTION_BRIDGE, SECTION_DROP, SECTION_OUTRO, SECTIONS_COUNT };
 enum eLiveAutomation { AUTO_MODULATE, AUTO_GROW, AUTO_DECAY, AUTO_SHAPES_COUNT };
 void engine_auto_start(int t, int v, int i, int shape, int depth, int bars);
+void engine_auto_depth(int t, int v, int i, int depth); /* 0..127, retain center/phase */
 void engine_auto_stop(void);
 int engine_auto_value(int t, int v, int i);
 void engine_section_queue(int section);

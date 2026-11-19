@@ -1,6 +1,6 @@
-# Live6 performer interface
+# Live7 performer interface
 
-Live6 starts on LIVE: one performance surface with latched sections. Select a
+Live7 starts on LIVE: one performance surface with latched sections. Select a
 section, release its button, then use the knobs and musical keys. No pagination.
 All LIVE display text is at least 20 px: labels/status 20, heading 24, values 36.
 The detailed legacy editor keeps its original layout and fonts.
@@ -34,22 +34,24 @@ instrument or the focused 303 waveform.
 
 ## Mixer
 
-Tap LFO once. Knobs 1–4 are the levels of 909, 808, 303 A and 303 B.
-Black keys 1–4 directly toggle those parts. White keys 1–11 toggle individual
-instruments in the focused kit. PRESETS switches the mixer kit between 909/808.
+Tap LFO for Mixer Level. Further LFO taps cycle Level, Pan, Reverb and Delay,
+then wrap to Level. SELECT cycles these views in either direction. HOME + SELECT
+changes tempo in Mixer; SELECT elsewhere in LIVE remains tempo.
 
-Hold REC and press a black or white key for part/instrument solo. Repeat to
-clear; tap REC while soloing also restores the prior mix. HOME + SEL restores
-the mix captured before the first manual mute gesture. Manual mutes retain
-priority over Director participation choices.
+Each view contains four vertical sliders, left-to-right: K1=909, K2=808,
+K3=303 A, K4=303 B. Pan has a center mark. M indicates a muted part.
+Black keys 1–4 directly toggle parts; white keys 1–11 toggle instruments in the
+focused kit. PRESETS switches that kit between 909 and 808.
 
-Hold SEL in Mixer for the selected instrument's level, pan, reverb and delay
-sends. Select a drum instrument in Instrument first when editing its sends.
-HOME + key mute gestures also remain available outside Mixer.
+Hold REC and press a black or white key for solo. Repeat to clear; REC tap while
+soloing restores the prior mix. HOME + SEL restores the mix captured before the
+first manual mute. Manual mutes have priority over Director decisions.
 
-![Mixer](img/performer/mix.png)
+Per-drum instrument pan/sends are available on its EDIT extra controls; select
+that drum with a white key first. Part pan/sends are the Mixer cycles above.
 
 ## Automation
+
 
 Tap ENV once. Knobs select target control, depth, cycle length and shape.
 Cycle lengths: 1, 2, 4 or 8 bars. The target is one of the selected instrument's
@@ -60,10 +62,14 @@ four native sound controls. Drum parameters without a numeric control are ignore
 | 1–3 | Modulate: shallow / medium / deep |
 | 4–6 | Growing saw: shallow / medium / deep |
 | 7–9 | Falling saw: shallow / medium / deep |
-| 10–16 | Stop all preset automation and return to manual values |
+| 10 / 12–16 | Stop all preset automation and return to manual values |
+| 11 | Run the current custom shape/depth/length |
 
-Presets capture the control's current value. Depths are roughly 1/8, 1/4 or
-3/8 of its parameter range. Values stay within the original parameter limits.
+Presets capture the control's current value. K2 selects depth 0–127 and updates
+an active gesture without shifting its center or phase. The three key shortcuts
+choose 16, 32 and 48. Depth scales proportionally to the target range, then clips
+at its limits: center 5, depth 10 on a 0–127 target produces 0–15. Depth 0 holds
+the center. White key 11 runs any custom depth.
 The modulation triangle moves around the captured value; growing/falling saws
 move above/below it and repeat. The manual project setting is retained.
 
@@ -78,7 +84,7 @@ transport returns gestures to manual settings. Preset automation is session-only
 The shared bar reference is the 909's normal 16-step, sixteenth-note pattern;
 keep that reference and legacy song/chaining off for this performance workflow.
 
-![Preset automation](img/performer/automation.png)
+
 
 ## Director and section length
 
@@ -133,7 +139,8 @@ Repeats capture the real stereo sound after the master processing. Audio capture
 holds 16384 frames (about 371 ms at 44.1 kHz); very slow repeat lengths are capped
 to this available history. Capture preserves approximately +/-2 signal units;
 master output limiting still applies. Entry/release and loop seams are smoothed.
-Tape stop uses this short history with a slowing read head and fade to silence.
+Tape stop slows to zero over 400 ms, with a fade over its final 80 ms. Chopper
+repeats a complete open/closed cycle every sixteenth note while held.
 
 To fit the capture ring without consuming the reserve, 32768 samples were
 reassigned from delay memory. The delay buffer is now 55432 samples (about
@@ -149,11 +156,13 @@ undo; REC + OCT+ redo. Undo preserves your later sound/mix changes. New musical
 actions replace the previous history entry.
 
 SAVE saves the project. LIKE captures, musical undo, mutes, section position and
-preset automation are session-only. SEQ opens detailed editing, HOME the legacy
-workspace, GLO settings. HOME + EDIT returns directly to LIVE.
+preset automation are session-only. Hold SEL and tap SEQ for classic editing,
+GLO for settings, or HOME for classic patterns. Plain HOME returns to LIVE;
+in LIVE it selects native instrument controls. HOME + EDIT is an alternative
+return gesture.
 
 ## Validation and limits
 
-See [Live6 engineering validation](LIVE6-VALIDATION.md) in the source repository.
+This build has not been tested. See [Live7 build notes](PERFORMANCE-UX-NEXT.md).
 Hardware timing, stack use, physical controls and device installation/recovery
 remain unverified. A browser emulator does not qualify the hardware build.

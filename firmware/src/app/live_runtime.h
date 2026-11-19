@@ -3,7 +3,7 @@
  * complete commands through the existing SPSC queue; no shared staging/waits. */
 #define LIVE_AUTO_LANES 8
 static volatile struct {
-    uint8_t active, t, v, i, shape, depth, bars, base, value, max;
+    uint8_t active, t, v, i, shape, depth, bars, base, value, max, amount;
 } live_auto[LIVE_AUTO_LANES] X0X_POOL;
 static struct {
     volatile uint8_t section, bar, length;
@@ -23,10 +23,15 @@ void engine_live_reset(void) { cq_put(C_LIVE_FORM,2,0,0); cq_put(C_LIVE_FX,255,0
 void engine_auto_start(int t, int v, int i, int shape, int depth, int bars)
 {
     if (!engine_live_clock_ready() || (unsigned)t >= NTARGETS || (unsigned)v >= NVOICES_MAX || (unsigned)i >= NPARAMS_MAX ||
-        (unsigned)shape >= AUTO_SHAPES_COUNT || depth < 1 || depth > 3 ||
+        (unsigned)shape >= AUTO_SHAPES_COUNT || (unsigned)depth > 127u ||
         (bars != 1 && bars != 2 && bars != 4 && bars != 8)) return;
-    cq_put(C_LIVE_AUTO,(unsigned)t | ((unsigned)shape<<3) | ((unsigned)depth<<5),
-           (unsigned)v | ((unsigned)i<<4),(unsigned)bars);
+    cq_put(C_LIVE_AUTO,(unsigned)t | ((unsigned)shape<<3),
+           (unsigned)v | ((unsigned)i<<4),(unsigned)bars | ((unsigned)depth<<4));
+}
+void engine_auto_depth(int t, int v, int i, int depth)
+{
+    if((unsigned)t>=NTARGETS || (unsigned)v>=NVOICES_MAX || (unsigned)i>=NPARAMS_MAX || (unsigned)depth>127u)return;
+    cq_put(C_LIVE_AUTO,128u|(unsigned)t,(unsigned)v|((unsigned)i<<4),(unsigned)depth);
 }
 void engine_auto_stop(void) { cq_put(C_LIVE_AUTO,255,0,0); }
 void engine_section_queue(int section)
@@ -78,9 +83,17 @@ static void live_runtime_command(unsigned a, unsigned b, unsigned c, int form_co
     }
     if (a==255) { live_auto_cancel(-1,0,0,1); return; }
     {
-        int t=a&7, v=b&15, i=b>>4, shape=(a>>3)&3, depth=(a>>5)&3;
+        int t=a&7, v=b&15, i=b>>4, shape=(a>>3)&3, depth=(c>>4)&127;
+        if(a&128u) {
+            for(k=0;k<LIVE_AUTO_LANES;++k)
+                if(live_auto[k].active && live_auto[k].t==t && live_auto[k].v==v && live_auto[k].i==i) {
+                    live_auto[k].depth=(uint8_t)c;
+                    live_auto[k].amount=(uint8_t)((live_auto[k].max*c+63u)/127u);
+                }
+            return;
+        }
         const x0x_param_t *d=engine_param(t,v,i);
-        if (!d || d->names || !mot_base_snd || shape>=AUTO_SHAPES_COUNT || !depth) return;
+        if (!d || d->names || !mot_base_snd || shape>=AUTO_SHAPES_COUNT) return;
         for (k=0;k<LIVE_AUTO_LANES;++k) {
             if (live_auto[k].active && live_auto[k].t==t && live_auto[k].v==v && live_auto[k].i==i) { slot=k; break; }
             if (!live_auto[k].active && slot<0) slot=k;
@@ -91,7 +104,8 @@ static void live_runtime_command(unsigned a, unsigned b, unsigned c, int form_co
         live_auto[slot].active=0;
         live_auto[slot].t=(uint8_t)t; live_auto[slot].v=(uint8_t)v; live_auto[slot].i=(uint8_t)i;
         live_auto[slot].shape=(uint8_t)shape; live_auto[slot].depth=(uint8_t)depth;
-        live_auto[slot].bars=(uint8_t)c; live_auto[slot].max=d->max;
+        live_auto[slot].bars=(uint8_t)(c&15u); live_auto[slot].max=d->max;
+        live_auto[slot].amount=(uint8_t)((d->max*depth+63)/127);
         live_auto[slot].value=live_auto[slot].base; live_auto[slot].active=1;
         apply_param(t,v,i,live_auto[slot].base);
     }
@@ -134,7 +148,7 @@ static void live_runtime_tick(uint32_t frames)
     frac=len ? form.elapsed*256u/len : 0; if(frac>255u)frac=255u;
     for(k=0;k<LIVE_AUTO_LANES;++k) if(live_auto[k].active) {
         unsigned n=live_auto[k].bars*16u, phase=((form.step&(n-1u))*256u+frac)*256u/n;
-        int amount=(live_auto[k].max*live_auto[k].depth)/8, value;
+        int amount=live_auto[k].amount, value;
         /* phase Q16; triangle starts at the manual value and returns there. */
         int wave=live_auto[k].shape==AUTO_MODULATE ?
             (phase<16384u ? (int)phase*4 : phase<49152u ? 131072-(int)phase*4 : (int)phase*4-262144) :

@@ -87,8 +87,12 @@ enum eLiveSolo { LIVE_SOLO_NONE, LIVE_SOLO_PART, LIVE_SOLO_INSTRUMENT, LIVE_SOLO
 enum eLiveEffect { LIVE_FX_NONE = -1, LIVE_FX_LOWPASS, LIVE_FX_HIGHPASS, LIVE_FX_PUMP, LIVE_FX_DRIVE,
     LIVE_FX_TAPE, LIVE_FX_CHOP, LIVE_FX_REPEAT8, LIVE_FX_REPEAT16, LIVE_FX_REPEAT32, LIVE_EFFECTS_COUNT };
 enum eLiveMode { LIVE_INSTRUMENT, LIVE_MIXER, LIVE_EFFECTS, LIVE_AUTOMATION, LIVE_DIRECTOR, LIVE_MODES_COUNT };
+enum eLiveMixControl { LIVE_MIX_LEVEL, LIVE_MIX_PAN, LIVE_MIX_REVERB, LIVE_MIX_DELAY, LIVE_MIX_CONTROLS_COUNT };
+static const uint8_t LIVE_MIX_PARAM[LIVE_MIX_CONTROLS_COUNT]={MX_LEVEL,MX_PAN,MX_REV,MX_DLY};
+enum eLiveDepthPreset { LIVE_DEPTH_SHALLOW, LIVE_DEPTH_MEDIUM, LIVE_DEPTH_DEEP, LIVE_DEPTH_PRESETS_COUNT };
+static const uint8_t LIVE_DEPTH_PRESET[LIVE_DEPTH_PRESETS_COUNT]={16,32,48};
 static struct {
-    uint8_t mode, extra, mix_kit, auto_parameter, auto_depth, auto_period, auto_shape;
+    uint8_t mode, extra, mix_kit, mix_control, auto_parameter, auto_depth, auto_period, auto_shape;
     uint8_t selected, capture_mask, capture_action, solo_kind, solo_target, restore_valid;
     uint8_t capture_pat[LIVE_TARGETS];
     int8_t fx_key, held_note;
@@ -819,10 +823,10 @@ static uint8_t *page_of(int view)
 
 static enum eLiveLayer live_layer(void)
 {
+    if (live.mode==LIVE_MIXER) return LIVE_MIX;
     if (ui.btn & (1u << B_FX)) return LIVE_MASTER;
     if (ui.btn & (1u << B_EDIT)) return LIVE_EXTRA;
     if (live.mode==LIVE_EFFECTS) return LIVE_MASTER;
-    if (live.mode==LIVE_MIXER) return (ui.btn & (1u<<B_SEL)) ? LIVE_SEND : LIVE_MIX;
     if (live.mode==LIVE_DIRECTOR) return LIVE_COMPOSE;
     if (live.mode==LIVE_AUTOMATION) return LIVE_SOUND;
     return live.extra ? LIVE_EXTRA : LIVE_SOUND;
@@ -838,7 +842,7 @@ static pref_t live_ref(int part, int knob)
         return PR(R_ENG, T_FX, 0, knob == 2 ? FX_DL_FDBK : FX_RV_LEVEL);
     }
     if (layer == LIVE_MIX) {
-        return PR(R_ENG,T_MIX,knob,MX_LEVEL);
+        return PR(R_ENG,T_MIX,knob,LIVE_MIX_PARAM[live.mix_control]);
     }
     if (layer == LIVE_SEND) {
         static const char *const names[4] = {"Level","Pan","Rev","Dly"};
@@ -2413,6 +2417,13 @@ static void button_tap(int b)
             perf_test_abort();
         return;
     }
+    if(b==B_HOME && ui.view!=V_LIVE) {
+        if((ui.btn & (1u<<B_SEL)) && ui.overlay!=O_ASK) {
+            ui.btn_used|=1u<<B_SEL;
+            set_view(ui.view==V_HOME?V_SONG:V_HOME);
+        } else set_view(V_LIVE); /* cancel any overlay; one tap back to performance */
+        return;
+    }
     if (ui.overlay == O_ASK) {                        /* a question takes SEL or HOME only */
         if (b == B_SEL) {
             ui.overlay = O_NONE;
@@ -2684,8 +2695,12 @@ static void input(void)
     if (ui.view == V_LIVE && ui.overlay == O_NONE) {
         if (live.mode!=LIVE_EFFECTS && !(ui.btn & (1u << B_FX))) live_fx_release();
         if ((e = enc(EN_SELECT)) != 0) {
-            float bpm = seq.bpm + (float)e;
-            seq.bpm = bpm < 20.0f ? 20.0f : bpm > 275.0f ? 275.0f : bpm; mark_dirty();
+            if(live.mode==LIVE_MIXER && !(ui.btn & (1u<<B_HOME))) live_mix_cycle(e);
+            else {
+                float bpm = seq.bpm + (float)e;
+                seq.bpm = bpm < 20.0f ? 20.0f : bpm > 275.0f ? 275.0f : bpm; mark_dirty();
+                ui.btn_used|=ui.btn&(1u<<B_HOME);
+            }
         }
         if ((e = enc(EN_ALGO)) != 0) {
             int p = ui.part + (e > 0 ? 1 : -1);
@@ -4287,7 +4302,9 @@ static void leds(void)
                 if(live.fx_key==(int)i)k|=1u<<WHITE_KEY[i]; else d|=1u<<WHITE_KEY[i];
             } else if(live.mode==LIVE_AUTOMATION) {
                 for(i=0;i<9;++i)d|=1u<<WHITE_KEY[i];
-                k|=1u<<WHITE_KEY[live.auto_shape*3u+live.auto_depth-1u];
+                for(i=0;i<LIVE_DEPTH_PRESETS_COUNT;++i)if(live.auto_depth==LIVE_DEPTH_PRESET[i])
+                    k|=1u<<WHITE_KEY[live.auto_shape*LIVE_DEPTH_PRESETS_COUNT+i];
+                d|=(1u<<WHITE_KEY[9])|(1u<<WHITE_KEY[10]);
             } else if(live.mode==LIVE_DIRECTOR) {
                 int pending=engine_section_value(1);
                 for(i=0;i<SECTIONS_COUNT;++i)d|=1u<<WHITE_KEY[i];
@@ -4845,7 +4862,8 @@ void ui_init(void)
     ui.part = PART_303A;
     live.selected = 1u << PART_303A; live.capture_mask = 0;
     live.mode=LIVE_INSTRUMENT; live.extra=live.mix_kit=live.auto_parameter=live.auto_period=live.auto_shape=0;
-    live.auto_depth=2;
+    live.auto_depth=LIVE_DEPTH_PRESET[LIVE_DEPTH_MEDIUM];
+    live.mix_control=LIVE_MIX_LEVEL;
     live.solo_kind = live.restore_valid = 0; live.fx_key = live.held_note = -1;
     ui.held_step = -1;
     ui.brk_held = -1;

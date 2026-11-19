@@ -2,12 +2,12 @@
 
 Turn your FM-1 into an instrument for live generative acid performance. Discover a bassline, develop it while it plays, bring in drums, and shape the sound with your hands. Two independent 303s, 909 and 808 drum machines, and a single LIVE screen keep musical changes, sound controls and mixing close together.
 
-**Current version: 1.2.1-live6 — experimental.** This fork builds on X0X 1.2.1. The new performance workflow has not yet been validated on an actual FM-1.
+**Current version: 1.2.1-live7 — experimental, built without running tests.** This fork builds on X0X 1.2.1. The new performance workflow has not yet been validated on an actual FM-1.
 
 - **[Try the browser emulator](https://copych.github.io/fm1-x0x/emu/)** — no hardware needed.
 - **[Install on your FM-1](https://copych.github.io/fm1-x0x/install/)** — Chrome or Edge, over USB.
 - **[Performer controls](https://copych.github.io/fm1-x0x/performance/)** — complete gestures and screenshots.
-- **[Download live6 firmware](https://copych.github.io/fm1-x0x/firmware/x0x-1.2.1-live6.fwsc)**.
+- **[Download live7 firmware](https://copych.github.io/fm1-x0x/firmware/x0x-1.2.1-live7.fwsc)**.
 
 ![LIVE performer screen](docs/img/performer/live.png)
 
@@ -51,20 +51,20 @@ The installer checks device and package identity. If it cannot find your device,
 | REC + black or white key | Solo a part or drum instrument |
 | HOME + SEL | Restore the captured mix |
 | EDIT, then knobs | Instrument controls; tap EDIT again for additional sound controls |
-| LFO, then knobs / keys | Mixer: four part levels / direct part and drum mutes |
+| LFO taps / SELECT in Mixer | Cycle four sliders through Level, Pan, Reverb and Delay |
 | FX, then knobs | Master filter, pump, delay feedback, reverb level |
 | FX, then hold white 1–9 | Filters, pump, drive, tape stop, chopper, repeats |
 | ENV | Latched automation: 3 depths of modulation, growing and falling saws |
 | ARP | Director: section queues, +/-1 bar and coordinated phrases |
-| SELECT | Tempo |
+| HOME + SELECT in Mixer | Tempo; SELECT elsewhere in LIVE also changes tempo |
 | SAVE | Save the project |
-| HOME + EDIT | Return to LIVE from the detailed editor or settings |
+| HOME | Return to LIVE; in LIVE, return to instrument controls |
 
 Key numbers count white and black keys separately from the left. The [complete controls guide](https://copych.github.io/fm1-x0x/performance/) explains linked selection, solo, effect release and Director requirements.
 
 ## What to expect from this version
 
-Live6 adds bar-aligned automation and queued INTRO/GROOVE/BUILD/BREAK/BRIDGE/DROP/OUTRO sections, with manual segment extension/shrinking. The LIVE display uses a 20 px minimum, 24 px headings and 36 px values. Automation joins current musical phase; a four-bar preset engaged in bar 3 resets after bar 4. Turning its sound knob takes over immediately.
+Live7 includes bar-aligned automation and queued INTRO/GROOVE/BUILD/BREAK/BRIDGE/DROP/OUTRO sections, with manual segment extension/shrinking. The LIVE display uses a 20 px minimum, 24 px headings and 36 px values. Automation joins current musical phase; a four-bar preset engaged in bar 3 resets after bar 4. Turning its sound knob takes over immediately.
 
 Audio FX currently target the master. Repeat history is about 371 ms, so very slow divisions are capped. To fit the capture ring, the maximum delay buffer is reduced from 2 seconds to about 1.26 seconds. Per-target repeats and drum-only DJ filtering remain planned. See the performer guide for the exact controls and limits.
 

@@ -3,6 +3,20 @@
  * Only dedicated 20/24/36 px fonts are used. Never shrink to fit. */
 static const char *const LIVE_SECTIONS[SECTIONS_COUNT]={"INTRO","GROOVE","BUILD","BREAK","BRIDGE","DROP","OUTRO"};
 static const char *const LIVE_SHAPES[AUTO_SHAPES_COUNT]={"MOD","GROW","FALL"};
+static const char *const LIVE_MIX_TITLE[LIVE_MIX_CONTROLS_COUNT]={"LEVEL","PAN","REVERB","DELAY"};
+static uint16_t live_bpm_background(void)
+{
+    static uint32_t last_beat=0xffffffffu,pulse_until;
+    static uint8_t downbeat,pulse_active;
+    uint32_t now=plat_ms(),step=eng_step[TRK_DRUM]&15u;
+    uint32_t position=((uint32_t)seq.t[TRK_DRUM].bars<<4)|step;
+    if(!seq.playing || !engine_live_clock_ready()) {last_beat=0xffffffffu;pulse_active=0;return C_BLACK;}
+    if(!(step&3u) && position!=last_beat) {
+        last_beat=position;pulse_until=now+90u;downbeat=(uint8_t)(step==0);pulse_active=1;
+    }
+    if(pulse_active && (int32_t)(pulse_until-now)<=0)pulse_active=0;
+    return pulse_active ? (downbeat?C_HI:C_AMB) : C_BLACK;
+}
 static void live_text(int x,int y,int width,const felucca_font_t *font,const char *s,uint16_t color,int offset)
 {
     char b[28]; int n=0;
@@ -10,18 +24,57 @@ static void live_text(int x,int y,int width,const felucca_font_t *font,const cha
     while(n && tw(font,b)>width) b[--n]=0;
     cv_text(x,y-offset,font,b,color);
 }
+static void draw_live_mix(int offset)
+{
+    static const char *const names[LIVE_TARGETS]={"909","808","A","B"};
+    int k;
+    for(k=0;k<LIVE_TARGETS;++k) {
+        int x=k*60,value=pref_get(live_ref(ui.part,k)),y;
+        char num[12];uint16_t color=part_muted(k)?C_DIM:PART_COL[k];
+        if(value<0)value=0;
+        if(value>127)value=127;
+        y=107+(127-value)*63/127;
+        live_text(x+3,77,38,&FONT_P20,names[k],color,offset);
+        if(part_muted(k))live_text(x+42,77,15,&FONT_P20,"M",C_AMB,offset);
+        cv_rect(x+27,107-offset,6,64,C_LINE);
+        if(live.mix_control==LIVE_MIX_PAN) {
+            const int center=107+(127-64)*63/127;
+            cv_rect(x+15,center-offset,30,1,C_GRAY);
+            if(y<center)cv_rect(x+27,y-offset,6,center-y,color);
+            else cv_rect(x+27,center-offset,6,y-center+1,color);
+            put_i(num,value-64);
+        } else {
+            cv_rect(x+27,y-offset,6,171-y,color);
+            put_i(num,value);
+        }
+        cv_rect(x+18,y-2-offset,24,4,color);
+        live_text(x+3,174,54,&FONT_P36,num,color,offset);
+    }
+}
 static void draw_live_surface(void)
 {
     int band,k,section=engine_section_value(0),pending=engine_section_value(1),bar=engine_section_value(2);
     int length=engine_section_value(3);
-    char b[28],num[28],unit[28];
-    const char *title=live.mode==LIVE_MIXER?(live.mix_kit?"MIXER 808":"MIXER 909"):live.mode==LIVE_EFFECTS?"MOMENT FX":
+    uint16_t bpm_background=live_bpm_background();
+    char b[28],num[28],unit[28],instrument_title[28];
+    const char *title=live.mode==LIVE_MIXER?LIVE_MIX_TITLE[live.mix_control]:live.mode==LIVE_EFFECTS?"MOMENT FX":
         live.mode==LIVE_AUTOMATION?(ui.part==PART_303A?"AUTO A":ui.part==PART_303B?"AUTO B":ui.part?"AUTO 808":"AUTO 909"):
         live.mode==LIVE_DIRECTOR?"DIRECTOR":PART_N[ui.part];
+    if(live.mode==LIVE_INSTRUMENT && is_drum()) {
+        const char *voice=engine_voice_name(ui.part?T_808:T_909,ui.sel[ui.part]);
+        char *q=put_s(instrument_title,ui.part?"808 ":"909 ");
+        int n=0;
+        while(voice[n] && q<instrument_title+27) {
+            *q++=voice[n]>='a'&&voice[n]<='z'?voice[n]-32:voice[n];++n;
+        }
+        *q=0;title=instrument_title;
+    }
     for(band=0;band<2;++band) {
         int offset=band*120;
         cv_begin(240,120,C_BLACK);
-        put_i(b,(int)seq_tempo(&seq)); live_text(6,0,48,&FONT_P20,b,C_WHITE,offset);
+        cv_rect(0,-offset,60,24,bpm_background);
+        put_i(b,(int)seq_tempo(&seq));
+        live_text(6,0,48,&FONT_P20,b,bpm_background==C_BLACK?C_WHITE:C_BLACK,offset);
         live_text(70,0,99,&FONT_P20,LIVE_SECTIONS[section%SECTIONS_COUNT],C_HI,offset);
         put_i(put_s(put_i(b,bar),"/"),length); live_text(184,0,53,&FONT_P20,b,C_WHITE,offset);
         for(k=0;k<length && k<32;++k) {
@@ -30,7 +83,10 @@ static void draw_live_surface(void)
         }
         live_text(6,39,156,&FONT_P24,title,part_col(),offset);
         if(live.mode==LIVE_INSTRUMENT && live.extra) live_text(160,43,76,&FONT_P20,"EXTRA",C_GRAY,offset);
-        if(live.mode==LIVE_EFFECTS && live.fx_key>=0) {
+        if(live.mode==LIVE_MIXER) {
+            live_text(180,43,56,&FONT_P20,live.mix_kit?"808":"909",C_GRAY,offset);
+            draw_live_mix(offset);
+        } else if(live.mode==LIVE_EFFECTS && live.fx_key>=0) {
             static const char *const fx[LIVE_EFFECTS_COUNT]={"LOWPASS","HIGHPASS","PUMP","DRIVE","TAPE STOP","CHOPPER","REPEAT 1/8","REPEAT 1/16","REPEAT 1/32"};
             live_text(6,73,220,&FONT_P24,fx[live.fx_key],C_AMB,offset);
             live_text(6,118,220,&FONT_P20,"HELD / RELEASE",C_WHITE,offset);

@@ -98,9 +98,12 @@ static int live_key(int black, int white, int key, int down)
     }
     if (live.mode==LIVE_AUTOMATION && down) {
         if(!engine_live_clock_ready()){warn("USE 909 16 STEPS",0);return 1;}
-        if (white<9) {
+        if (white<9 || white==10) {
             pref_t r=live_ref(ui.part,live.auto_parameter);
-            live.auto_shape=(uint8_t)(white/3); live.auto_depth=(uint8_t)(white%3+1);
+            if(white<9) {
+                live.auto_shape=(uint8_t)(white/LIVE_DEPTH_PRESETS_COUNT);
+                live.auto_depth=LIVE_DEPTH_PRESET[white%LIVE_DEPTH_PRESETS_COUNT];
+            }
             if (r.kind==R_ENG) engine_auto_start(r.a,r.b,r.c,live.auto_shape,live.auto_depth,1<<live.auto_period);
             say("AUTOMATION",0);
         } else engine_auto_stop();
@@ -167,21 +170,46 @@ static int live_key(int black, int white, int key, int down)
     }
     return 1;
 }
+static void live_mix_cycle(int delta)
+{
+    int next=(int)live.mix_control+delta%LIVE_MIX_CONTROLS_COUNT;
+    if(next<0)next+=LIVE_MIX_CONTROLS_COUNT;
+    if(next>=LIVE_MIX_CONTROLS_COUNT)next-=LIVE_MIX_CONTROLS_COUNT;
+    live.mix_control=(uint8_t)next;
+}
 static int live_button(int b)
 {
     if (b==B_EDIT || b==B_LFO || b==B_FX || b==B_ENV) {
         live_fx_release(); live_note_release();
         if(b==B_EDIT) { if(live.mode==LIVE_INSTRUMENT)live.extra^=1; else live.extra=0; live.mode=LIVE_INSTRUMENT; }
-        else live.mode=b==B_LFO?LIVE_MIXER:b==B_FX?LIVE_EFFECTS:LIVE_AUTOMATION;
+        else if(b==B_LFO) {
+            if(live.mode==LIVE_MIXER)live_mix_cycle(1);
+            else {live.mode=LIVE_MIXER;live.mix_control=LIVE_MIX_LEVEL;}
+        } else live.mode=b==B_FX?LIVE_EFFECTS:LIVE_AUTOMATION;
         build_pages(); return 1;
     }
-    if (b == B_HOME) { set_view(V_HOME); return 1; }
+    if (b == B_HOME) {
+        if(ui.btn & (1u<<B_SEL)) {
+            ui.btn_used|=1u<<B_SEL; set_view(V_HOME);
+        } else {
+            live_fx_release(); live_note_release();
+            live.mode=LIVE_INSTRUMENT; live.extra=0; build_pages();
+        }
+        return 1;
+    }
+    if (b==B_SEQ || b==B_GLO) {
+        if(ui.btn & (1u<<B_SEL)) {
+            ui.btn_used|=1u<<B_SEL; return 0; /* deliberate entry into the classic UI */
+        }
+        say(b==B_SEQ?"SEL+SEQ: EDITOR":"SEL+GLO: SETUP",0);
+        return 1;
+    }
     if (b == B_PLAY && (ui.btn & (1u << B_HOME))) {
         ui.btn_used |= 1u << B_HOME;
         if (!engine_perform_request(PERFORM_REDO,0,0)) warn("NO MUSICAL REDO",0);
         return 1;
     }
-    if (b == B_GLO || b == B_SAVE || b == B_PLAY || b == B_SEQ) return 0;
+    if (b == B_SAVE || b == B_PLAY) return 0;
     if (b == B_SEL) {
         if (ui.btn & (1u << B_HOME)) {
             ui.btn_used |= 1u << B_HOME; live_solo_clear();
@@ -242,9 +270,16 @@ static void live_knob(int knob, int delta)
     if(live.mode==LIVE_AUTOMATION) {
         int value;
         uint8_t *field=knob==0?&live.auto_parameter:knob==1?&live.auto_depth:knob==2?&live.auto_period:&live.auto_shape;
-        int min=knob==1?1:0, max=knob==3?3:4;
-        value=*field+delta; if(value<min)value=min; if(value>=max)value=max-1;
-        *field=(uint8_t)value; return;
+        int max=knob==1?128:knob==3?AUTO_SHAPES_COUNT:4;
+        value=*field+(knob==1?accel(EN_K1+knob,delta,127):delta);
+        if(value<0)value=0;
+        if(value>=max)value=max-1;
+        *field=(uint8_t)value;
+        if(knob==1) {
+            pref_t r=live_ref(focus,live.auto_parameter);
+            if(r.kind==R_ENG)engine_auto_depth(r.a,r.b,r.c,live.auto_depth);
+        }
+        return;
     }
     if(live.mode==LIVE_DIRECTOR && knob>=2) {
         if(knob==2)engine_section_resize(delta);
