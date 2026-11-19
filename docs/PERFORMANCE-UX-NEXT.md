@@ -382,3 +382,35 @@ new linker/stack totals, host behavior, physical recovery and hardware real-time
 validation remain UNVERIFIED. No builds/tests/captures/publication run.
 After approval, check −24/0/+24, signed display/center, independent and linked
 303 edits, pattern switching/save/load/LIKE/RETURN, and note-range clipping.
+
+## Live10 build record — no tests run
+
+Application source checkpoint: `43e24e2`. Includes compressor tuning, combined
+303 Drive with RAT-only toe, repeated focused black-key EDIT toggling and
+current-pattern ±24-semitone transpose. Later README/build-record updates do not
+change the compiled application. Built for FM-1 using the existing matched
+JieLi toolchain and AC79 SDK:
+`tools/build-fm1-wsl.sh --release 1.2.1-live10`, then
+`X0X_VERSION=1.2.1-live10 tools/build-emu-wsl.sh` (Emscripten 3.1.69).
+
+- Application: 443704 bytes.
+- Ordinary RAM: 96428 / 98304 (1876 free).
+- Pool: 331752 / 344064 (12312 free), retaining 8192-byte reserve.
+- Package: `build/x0x-1.2.1-live10.fwsc`, 609682 bytes, FM-1_9010201.
+- SHA-256: `d57c4c7680a27c5c3b7ea6d566c4ae1bd6571f5c933c14481eca2339896b77aa`.
+- Matching emulator: 537468-byte WASM; optional page voice absent.
+- Retained build checks: 909 call-free RAM-text instructions, no soft-double
+  routines, HAL-only register access, SDK/loader/package integrity checks.
+
+Compliance: target/build/ABI PASS for compile/link/package scope; audio hot
+path/numerics and execution ownership PASS for reviewed UI-only changes using
+existing setters/pattern fields, with paired Drive-command audible behavior
+UNVERIFIED. Memory PASS for static linker budgets, stack UNVERIFIED.
+Dependencies/includes/licenses PASS (unchanged). Compatibility PASS for unchanged
+storage/loader contracts, physical installation/recovery UNVERIFIED. Host
+functional and hardware real-time validation UNVERIFIED: no tests, listening,
+browser runtime exercise or fresh screen captures run for this build. No device
+flashed. The concrete pending checks are listed in the follow-up sections above.
+
+Local install/emulator pages are prepared for live10. Source and build record
+are committed locally; no GitHub push or public Pages deployment requested.

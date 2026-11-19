@@ -5,12 +5,12 @@ bassline, keep an idea you like, develop it, bring in drums and direct the next
 break or drop. Two independent 303s, 909 and 808 drums, hands-on sound controls
 and performance effects share one LIVE interface.
 
-**Current version: 1.2.1-live9 · experimental.** Hardware validation is pending.
+**Current version: 1.2.1-live10 · experimental.** Hardware validation is pending.
 
 **[Play in your browser](https://copych.github.io/fm1-x0x/emu/)** ·
 **[Install on FM-1](https://copych.github.io/fm1-x0x/install/)** ·
 **[Full controls guide](https://copych.github.io/fm1-x0x/performance/)** ·
-**[Download firmware](https://copych.github.io/fm1-x0x/firmware/x0x-1.2.1-live9.fwsc)**
+**[Download firmware](https://copych.github.io/fm1-x0x/firmware/x0x-1.2.1-live10.fwsc)**
 
 ## What it does
 
@@ -82,7 +82,7 @@ verified. If the instrument will not start, see the
 | --- | --- |
 | **EDIT** | Selected instrument's sound; tap again for extra controls |
 | **LFO** | Mixer; repeated taps cycle Level, Pan, Reverb send, Delay send |
-| **FX** | Momentary, Delay and Reverb views; repeated taps cycle them |
+| **FX** | Momentary, Delay, Reverb, Compressor and Comp Detail; repeated taps cycle them |
 | **ENV** | Automation: destination, depth, bars and shape |
 | **ARP** | Director: Weird, Full, segment length and next section |
 | **HOME** | Return to LIVE sound controls |
@@ -94,11 +94,18 @@ there; SELECT elsewhere in LIVE changes tempo directly.
 The first four **black keys** select **909 / 808 / 303 A / 303 B** outside Mixer;
 hold SEL to select several. On a drum sound screen, **white keys** select the
 instrument named in the heading. In Mixer, those keys operate mutes instead.
+Tap the selected black key again to toggle its native/extra sound controls,
+just like EDIT. The 303 extra controls are Accent, Wave, Drive and Transpose
+(−24..+24 semitones on the current pattern). DRIVE 0 is off; 1–63 spans SOFT;
+64–127 spans RAT, with gentle 1:1 amounts at positions 64–68.
 Hold **REC + a musical key** for solo. **HOME + SEL** restores the captured mix.
 
 **Global FX controls:** Delay has time division, feedback, tone and return level.
 Reverb has decay, tone, low cut and return level. White keys keep their momentary
-FX gestures in all three FX views.
+FX gestures in every FX view. Compressor has amount, attack, release and dry/wet
+mix; Comp Detail has threshold, ratio, makeup and kick pump. The amount macro
+changes threshold, ratio and makeup together; use Comp Detail afterward for
+individual adjustments.
 
 **Automation:** K2 sets depth from 0 to 127. White keys offer three depths each
 of modulation, growing and falling ramps; cycles are 1, 2, 4 or 8 bars. A four-bar
