@@ -38,7 +38,7 @@
 </style>
 </head>
 <body>
-<main><aside style="border:1px solid currentColor;padding:16px;margin:20px 0"><strong>X0X Live 1.2.1-live9 — experimental</strong><p>Two 303s, 909 and 808, with the LIVE performer interface. Hardware validation is pending. Back up before switching firmware; this site's backup tool handles X0X projects only.</p><p>Using Sloop? Back up with the <a href="https://isod89.github.io/sloop-fm1/webapp/editor/">Sloop editor</a>, then close it. Direct switching from Sloop is not yet verified.</p><p><a href="../performance/">Performer controls</a> · <a href="../build-info.json">Build identity and checksum</a></p></aside>
+<main><aside style="border:1px solid currentColor;padding:16px;margin:20px 0"><strong>X0X Live 1.2.1-live11 — experimental</strong><p>Two 303s, 909 and 808, with the LIVE performer interface. Hardware validation is pending. Back up before switching firmware; this site's backup tool handles X0X projects only.</p><p>Using Sloop? Back up with the <a href="https://isod89.github.io/sloop-fm1/webapp/editor/">Sloop editor</a>, then close it. Direct switching from Sloop is not yet verified.</p><p><a href="../performance/">Performer controls</a> · <a href="../build-info.json">Build identity and checksum</a></p></aside>
   <button class="lang" id="lang"></button>
   <a class="home" href="../">X0X</a>
   <h1>Install X0X</h1>
@@ -451,7 +451,7 @@ function sayPct(k, pct) {
 }
 const log = (t) => { $("log").textContent += t + "\n"; };
 let image = null;
-const meta = {"version": "1.2.1-live9", "product": "FM-1_9010201", "pkg": "../firmware/x0x-1.2.1-live9.fwsc"};
+const meta = {"version": "1.2.1-live11", "product": "FM-1_9010201", "pkg": "../firmware/x0x-1.2.1-live11.fwsc"};
 
 let writing = false;
 window.addEventListener("beforeunload", (e) => { if (writing) { e.preventDefault(); e.returnValue = t("leave"); } });
