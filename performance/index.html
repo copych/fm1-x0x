@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Live6 performer interface · X0X</title>
-<meta name="description" content="Live6 performer interface for X0X, groovebox firmware for the M-VAVE FM-1.">
+<title>Live9 performer interface · X0X</title>
+<meta name="description" content="Live9 performer interface for X0X, groovebox firmware for the M-VAVE FM-1.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Barlow+Semi+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400&display=swap">
@@ -89,28 +89,27 @@ nav.contents li { break-inside: avoid; }
 <a class="skip" href="#content">Skip to content</a>
 <main id="content">
 <a class="home" href="../">X0X</a>
-<h1>Live6 performer interface</h1>
-<p>Live6 starts on LIVE: one performance surface with latched sections. Select a section, release its button, then use the knobs and musical keys. No pagination. All LIVE display text is at least 20 px: labels/status 20, heading 24, values 36. The detailed legacy editor keeps its original layout and fonts.</p>
+<h1>Live9 performer interface</h1>
+<p>Live9 starts on LIVE: one performance surface with latched sections. Select a section, release its button, then use the knobs and musical keys. No pagination. All LIVE display text is at least 20 px: labels/status 20, heading 24, values 36. The detailed legacy editor keeps its original layout and fonts.</p>
 <div class="figs"><figure class="shot"><img src="img/performer/live.png" alt="LIVE sound controls" loading="lazy"><figcaption>LIVE sound controls</figcaption></figure></div>
 <h2 id="start-playing">Start playing</h2>
 <ol><li>On 303 A, press OCT+ for a phrase, then PLAY.</li><li>Tap ARP to select Director. Tap ARP again to coordinate B and the drum kit.</li><li>First four black keys select 909, 808, 303 A and 303 B. Hold SEL to link parts.</li><li>Tap EDIT for the selected instrument, LFO for Mixer, FX for momentary effects, ENV for Automation, or ARP for Director. These selections latch.</li></ol>
 <p>Key numbers below count white or black keys separately, from the left.</p>
 <h2 id="instrument">Instrument</h2>
-<p>The four 303 knobs control cutoff, resonance, envelope modulation and decay. Tap EDIT again for accent, waveform, drive and drive type; again returns to the native controls. Independent patches and levels remain independent.</p>
+<p>The four 303 knobs control cutoff, resonance, envelope modulation and decay. Continuous instrument controls use sliders in K1–K4 order; numbers are right-aligned. Named choices such as waveform remain text. Tap EDIT again for accent, waveform, drive and drive type; again returns to the native controls. Independent patches and levels remain independent.</p>
 <p>The first six white keys on a 303 apply small relative sound macros: Dry, Squelch, Bite, Dub, Thin and Wide. Changes are bounded by each control's range. They can operate on both selected 303s. Manual note playing remains in SEQ.</p>
 <p>On drums, white keys select instruments; knobs control tuning, character, decay and drive where supported. EDIT selects instrument level/pan/reverb/delay. EDIT + PRESETS changes drum distortion type. PRESETS normally selects a drum instrument or the focused 303 waveform.</p>
 <h2 id="mixer">Mixer</h2>
-<p>Tap LFO once. Knobs 1–4 are the levels of 909, 808, 303 A and 303 B. Black keys 1–4 directly toggle those parts. White keys 1–11 toggle individual instruments in the focused kit. PRESETS switches the mixer kit between 909/808.</p>
-<p>Hold REC and press a black or white key for part/instrument solo. Repeat to clear; tap REC while soloing also restores the prior mix. HOME + SEL restores the mix captured before the first manual mute gesture. Manual mutes retain priority over Director participation choices.</p>
-<p>Hold SEL in Mixer for the selected instrument's level, pan, reverb and delay sends. Select a drum instrument in Instrument first when editing its sends. HOME + key mute gestures also remain available outside Mixer.</p>
-<div class="figs"><figure class="shot"><img src="img/performer/mix.png" alt="Mixer" loading="lazy"><figcaption>Mixer</figcaption></figure></div>
+<p>Tap LFO for Mixer Level. Further LFO taps cycle Level, Pan, Reverb and Delay, then wrap to Level. SELECT cycles these views in either direction. HOME + SELECT changes tempo in Mixer; SELECT elsewhere in LIVE remains tempo.</p>
+<p>Each view contains four sliders, left-to-right: K1=909, K2=808, K3=303 A, K4=303 B. Pan sliders are horizontal with a center mark; other mixer sliders are vertical. M indicates a muted part. Black keys 1–4 directly toggle parts; white keys 1–11 toggle instruments in the focused kit. PRESETS switches that kit between 909 and 808.</p>
+<p>Hold REC and press a black or white key for solo. Repeat to clear; REC tap while soloing restores the prior mix. HOME + SEL restores the mix captured before the first manual mute. Manual mutes have priority over Director decisions.</p>
+<p>Per-drum instrument pan/sends are available on its EDIT extra controls; select that drum with a white key first. Part pan/sends are the Mixer cycles above.</p>
 <h2 id="automation">Automation</h2>
-<p>Tap ENV once. Knobs select target control, depth, cycle length and shape. Cycle lengths: 1, 2, 4 or 8 bars. The target is one of the selected instrument's four native sound controls. Drum parameters without a numeric control are ignored.</p>
-<div class="table"><table><thead><tr><th>White keys</th><th>Presets</th></tr></thead><tbody><tr><td>1–3</td><td>Modulate: shallow / medium / deep</td></tr><tr><td>4–6</td><td>Growing saw: shallow / medium / deep</td></tr><tr><td>7–9</td><td>Falling saw: shallow / medium / deep</td></tr><tr><td>10–16</td><td>Stop all preset automation and return to manual values</td></tr></tbody></table></div>
-<p>Presets capture the control's current value. Depths are roughly 1/8, 1/4 or 3/8 of its parameter range. Values stay within the original parameter limits. The modulation triangle moves around the captured value; growing/falling saws move above/below it and repeat. The manual project setting is retained.</p>
+<p>Tap ENV once. Knobs select target control, depth, cycle length and shape. All four controls run left to right in K1–K4 order. Depth has a vertical slider; the shape control shows its contour. Director uses the same four-column layout. Cycle lengths: 1, 2, 4 or 8 bars. The target is one of the selected instrument's four native sound controls. Drum parameters without a numeric control are ignored.</p>
+<div class="table"><table><thead><tr><th>White keys</th><th>Presets</th></tr></thead><tbody><tr><td>1–3</td><td>Modulate: shallow / medium / deep</td></tr><tr><td>4–6</td><td>Growing saw: shallow / medium / deep</td></tr><tr><td>7–9</td><td>Falling saw: shallow / medium / deep</td></tr><tr><td>10 / 12–16</td><td>Stop all preset automation and return to manual values</td></tr><tr><td>11</td><td>Run the current custom shape/depth/length</td></tr></tbody></table></div>
+<p>Presets capture the control's current value. K2 selects depth 0–127 and updates an active gesture without shifting its center or phase. The three key shortcuts choose 16, 32 and 48. Depth scales proportionally to the target range, then clips at its limits: center 5, depth 10 on a 0–127 target produces 0–15. Depth 0 holds the center. White key 11 runs any custom depth. The modulation triangle moves around the captured value; growing/falling saws move above/below it and repeat. The manual project setting is retained.</p>
 <p>Automation joins the current musical phase: engage a four-bar grow in bar 3, and it joins midway through that cycle, resetting at the end of bar 4. It does not begin a new four-bar countdown. A new section establishes a new origin. Extending a section preserves its current position and postpones the next one.</p>
 <p>Up to eight parameter gestures can run at once. Turning an automated sound knob takes over from its current audible value and cancels that gesture. Stopping transport returns gestures to manual settings. Preset automation is session-only. The shared bar reference is the 909's normal 16-step, sixteenth-note pattern; keep that reference and legacy song/chaining off for this performance workflow.</p>
-<div class="figs"><figure class="shot"><img src="img/performer/automation.png" alt="Preset automation" loading="lazy"><figcaption>Preset automation</figcaption></figure></div>
 <h2 id="director-and-section-length">Director and section length</h2>
 <p>Tap ARP for Director. Knobs 1/2 are drum Weird/Full; knob 3 changes the current segment length; knob 4 queues the next section. Musical keys provide direct access:</p>
 <div class="table"><table><thead><tr><th>White key</th><th>Action</th></tr></thead><tbody><tr><td>1–7</td><td>Queue INTRO, GROOVE, BUILD, BREAK, BRIDGE, DROP, OUTRO</td></tr><tr><td>8 / 9</td><td>Shrink / extend the current segment by one bar</td></tr><tr><td>10</td><td>Coordinate B and drums around the established A phrase</td></tr></tbody></table></div>
@@ -120,14 +119,16 @@ nav.contents li { break-inside: avoid; }
 <p>The phrase coordinator keeps A and prepares a related B response and groove. It needs nonempty A, forward 16-step 303s at sixteenth-note rate, automatic mutation off, a normal 909 clock pattern, and no legacy song/chaining.</p>
 <div class="figs"><figure class="shot"><img src="img/performer/director.png" alt="Director" loading="lazy"><figcaption>Director</figcaption></figure></div>
 <h2 id="momentary-fx">Momentary FX</h2>
-<p>Tap FX once. Hold a white key; release it to return to the live signal.</p>
+<p>Tap FX for Momentary. Further FX taps cycle Delay, Reverb and Momentary. SELECT also cycles these views; HOME + SELECT changes tempo here. Hold a white key in any FX view; release it to return to the live signal.</p>
+<div class="table"><table><thead><tr><th>FX view</th><th>K1</th><th>K2</th><th>K3</th><th>K4</th></tr></thead><tbody><tr><td>Momentary</td><td>DJ filter</td><td>Pump</td><td>Delay feedback</td><td>Reverb return</td></tr><tr><td>Delay</td><td>Time division</td><td>Feedback</td><td>Tone</td><td>Return level</td></tr><tr><td>Reverb</td><td>Decay</td><td>Tone</td><td>Low cut</td><td>Return level</td></tr></tbody></table></div>
+<div class="figs"><figure class="shot"><img src="img/performer/delay.png" alt="Delay controls" loading="lazy"><figcaption>Delay controls</figcaption></figure><figure class="shot"><img src="img/performer/reverb.png" alt="Reverb controls" loading="lazy"><figcaption>Reverb controls</figcaption></figure></div>
 <div class="table"><table><thead><tr><th>White key</th><th>Gesture</th></tr></thead><tbody><tr><td>1 / 2</td><td>Low-pass / high-pass DJ filter</td></tr><tr><td>3 / 4</td><td>Kick pump / drive</td></tr><tr><td>5 / 6</td><td>Tape stop / chopper</td></tr><tr><td>7 / 8 / 9</td><td>Captured audio repeat at 1/8 / 1/16 / 1/32</td></tr></tbody></table></div>
-<p>One momentary effect is active at a time. Changing section/target or turning a knob releases it. FX knobs remain master filter, pump, delay feedback and reverb return level. The gestures currently target the master mix; per-target repeat and drum-only DJ filtering are not yet provided.</p>
-<p>Repeats capture the real stereo sound after the master processing. Audio capture holds 16384 frames (about 371 ms at 44.1 kHz); very slow repeat lengths are capped to this available history. Capture preserves approximately +/-2 signal units; master output limiting still applies. Entry/release and loop seams are smoothed. Tape stop uses this short history with a slowing read head and fade to silence.</p>
+<p>One momentary effect is active at a time. Changing section/target or turning a knob releases it. The gestures currently target the master mix; per-target repeat and drum-only DJ filtering are not yet provided.</p>
+<p>Repeats capture the real stereo sound after the master processing. Audio capture holds 16384 frames (about 371 ms at 44.1 kHz); very slow repeat lengths are capped to this available history. Capture preserves approximately +/-2 signal units; master output limiting still applies. Entry/release and loop seams are smoothed. Tape stop slows to zero over 400 ms, with a fade over its final 80 ms. Chopper repeats a complete open/closed cycle every sixteenth note while held.</p>
 <p>To fit the capture ring without consuming the reserve, 32768 samples were reassigned from delay memory. The delay buffer is now 55432 samples (about 1.26 seconds instead of 2 seconds); longer delay requests clamp to available memory. Shared delay/reverb and their natural tails remain independent of the short performance capture. Breakbeat playback remains disabled.</p>
 <h2 id="musical-memory-and-saving">Musical memory and saving</h2>
-<p>OCT+ makes new material; OCT- develops 303s or varies drums. ENV + OCT+ captures LIKE; LFO + OCT- RETURN restores selected captures. REC tap is one-level musical undo; REC + OCT+ redo. Undo preserves your later sound/mix changes. New musical actions replace the previous history entry.</p>
-<p>SAVE saves the project. LIKE captures, musical undo, mutes, section position and preset automation are session-only. SEQ opens detailed editing, HOME the legacy workspace, GLO settings. HOME + EDIT returns directly to LIVE.</p>
+<p>OCT+ makes new material; OCT- develops 303s or varies drums. SEQ captures LIKE; GLO restores selected captures (RETURN). ENV + OCT+ and LFO + OCT- remain alternative LIKE/RETURN gestures. REC tap is one-level musical undo; REC + OCT+ redo. Undo preserves your later sound/mix changes. New musical actions replace the previous history entry.</p>
+<p>SAVE saves the project. LIKE captures, musical undo, mutes, section position and preset automation are session-only. Hold SEL and tap SEQ for classic editing, GLO for settings, or HOME for classic patterns. Plain HOME returns to LIVE; in LIVE it selects native instrument controls. HOME + EDIT is an alternative return gesture.</p>
 </main>
 <script>
 (() => {

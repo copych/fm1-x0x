@@ -1,8 +1,8 @@
 {
-  "version": "1.2.1-live6",
-  "source": "5031e104cb7049041be1ee45677054d9d9e67537",
-  "sha256": "2b8260287e57742d222a38243821d85513132127cf2662ac6117900abc33e6d5",
+  "version": "1.2.1-live9",
+  "source": "81506e1abe53eebe43d97b06005592bc0997d8b2",
+  "sha256": "8d2763381dc9b0cc7f73df35aac6fc458c2c220d0db5257cd32769655e8f35e7",
   "bytes": 609682,
-  "package": "firmware/x0x-1.2.1-live6.fwsc",
+  "package": "firmware/x0x-1.2.1-live9.fwsc",
   "hardware_validation": "UNVERIFIED"
 }
