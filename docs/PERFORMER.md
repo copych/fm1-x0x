@@ -1,6 +1,6 @@
-# Live11 performer interface
+# Live12 performer interface
 
-Live11 starts on LIVE: one performance surface with latched sections. Select a
+Live12 starts on LIVE: one performance surface with latched sections. Select a
 section, release its button, then use the knobs and musical keys. No pagination.
 All LIVE display text is at least 20 px: labels/status 20, heading 24, values 36.
 The detailed legacy editor keeps its original layout and fonts.
@@ -167,9 +167,9 @@ and silences tails, relocking its open edge to each sixteenth. Release remains
 immediate with the existing short wet fade, rather than waiting for a grid line.
 Keep the normal 909 16-step/sixteenth clock running for these gestures.
 
-The DJ filter now affects both drum kits and their new delay/reverb sends.
-303s and already sounding delay/reverb tails bypass it. Master compression,
-pump, drive, tape stop, chopper and repeats still affect the full mix.
+The DJ filter affects the full mix: both drum kits, both 303s and the
+delay/reverb returns. Compression, pump, drive, tape stop, chopper and repeats
+also remain on the full mix.
 
 One regular momentary effect and one snare roll can run together. Hold a roll
 key while turning K1 filter, or hold a low/high-pass key as well. Releasing one

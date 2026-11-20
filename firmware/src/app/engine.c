@@ -1230,7 +1230,6 @@ static void render_sub(float *out_l, float *out_r, uint32_t n)
             t0[i] = (t0[i] + tr[i]) * 0.5f;
         kit_sends(PART_808, t0, n);
     }
-    drum_filter_process(dry_l,dry_r,rev,dly,n);
     for (b = 0; b < NBASS; b++) {
         int p = PART_303A + b;
         if (idle[b])
@@ -1302,7 +1301,7 @@ void engine_render(int32_t *out_lr, uint32_t n)
         render_sub(out_l + done, out_r + done, k);
         {
             PROF_T(pm);
-            master_process_st_unfiltered(&mst,out_l+done,out_r+done,(int)k,vol);
+            master_process_st(&mst,out_l+done,out_r+done,(int)k,vol);
             live_audio_process(out_l+done,out_r+done,k);
             PROF_ADD(6,pm);
         }

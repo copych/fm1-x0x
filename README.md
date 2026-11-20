@@ -5,12 +5,12 @@ bassline, keep an idea you like, develop it, bring in drums and direct the next
 break or drop. Two independent 303s, 909 and 808 drums, hands-on sound controls
 and performance effects share one LIVE interface.
 
-**Current version: 1.2.1-live11 · experimental.** Hardware validation is pending.
+**Current version: 1.2.1-live12 · experimental.** Hardware validation is pending.
 
 **[Play in your browser](https://copych.github.io/fm1-x0x/emu/)** ·
 **[Install on FM-1](https://copych.github.io/fm1-x0x/install/)** ·
 **[Full controls guide](https://copych.github.io/fm1-x0x/performance/)** ·
-**[Download firmware](https://copych.github.io/fm1-x0x/firmware/x0x-1.2.1-live11.fwsc)**
+**[Download firmware](https://copych.github.io/fm1-x0x/firmware/x0x-1.2.1-live12.fwsc)**
 
 ## What it does
 
@@ -32,7 +32,8 @@ and performance effects share one LIVE interface.
 
 ## Screens
 
-These are screen captures from the matching emulator. Each screen is 240 × 240;
+These screen captures illustrate the LIVE layout. The earlier FX capture says
+DRUM DJ; in live12 the DJ filter acts on the full mix. Each screen is 240 × 240;
 labels stay large, controls follow the knobs from left to right, and values are
 right-aligned. Pan uses horizontal sliders.
 
@@ -50,7 +51,7 @@ right-aligned. Pan uses horizontal sliders.
 
 | 303 extra controls | Compressor | Snare roll |
 | --- | --- | --- |
-| ![Combined Drive and transpose](docs/img/performer/303-extra.png) | ![Compressor controls](docs/img/performer/compressor.png) | ![Snare roll and drum filter](docs/img/performer/roll.png) |
+| ![Combined Drive and transpose](docs/img/performer/303-extra.png) | ![Compressor controls](docs/img/performer/compressor.png) | ![Snare roll and filter](docs/img/performer/roll.png) |
 
 ## Install
 
@@ -114,8 +115,7 @@ individual adjustments.
 **Snare rolls:** hold white keys **10 / 11 / 12** in FX for **1/8 / 1/16 / 1/32**
 rolls on the last selected drum kit. Hold a roll while turning K1 DJ filter or
 holding a filter key. Releasing one does not stop the other. The DJ filter
-affects **909 and 808 drums**, including new FX sends; the 303s and existing
-delay/reverb tails stay outside it.
+affects the **full mix**: both drum kits, both 303s and delay/reverb returns.
 
 **Beat-aligned effects:** effect presses wait for the next sixteenth-note event.
 Release before it starts to cancel. Chopper passes attacks and silences tails,
@@ -139,8 +139,8 @@ not synth patches or the mix. Captures, musical undo, manual mutes, section
 position and automation are temporary performance state and do not survive a restart.
 Named scene presets and a persistent favorites library are not available yet.
 
-Tape stop, chopper, repeats, drive and pump act on the master mix; the DJ filter
-acts on the drums. Momentary starts require playback and the normal 909 16-step
+Tape stop, chopper, repeats, drive, pump and the DJ filter act on the master mix.
+Momentary starts require playback and the normal 909 16-step
 sixteenth-note reference. Repeat history is
 about 371 ms, so longer repeats are capped. Maximum delay is about 1.26 seconds.
 Breakbeat playback is disabled in this version. The Director is an early

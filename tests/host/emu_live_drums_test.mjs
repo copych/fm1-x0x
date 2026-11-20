@@ -90,8 +90,8 @@ async function isolated(filter,bass){
 for(const bass of [true,false]){
  const a=await isolated(false,bass),b=await isolated(true,bass);
  let diff=0,peak=0;for(let n=0;n<a.length;n++){diff=Math.max(diff,Math.abs(a[n]-b[n]));peak=Math.max(peak,Math.abs(a[n]));}
- assert(peak>0.001,'audible reference');if(bass)assert.equal(diff,0,'303 is bit-identical through drum-only filter');else assert(diff>0.001,'drums are filtered');
- console.log(`drum filter routing: ${bass?'isolated 303 unchanged':'isolated drums changed'} PASS`);
+ assert(peak>0.001,'audible reference');assert(diff>0.001,bass?'master filter affects 303':'master filter affects drums');
+ console.log(`master filter routing: isolated ${bass?'303':'drums'} changed PASS`);
 }
 {
  const {e,tap,turn,wait,grid,until}=await boot();

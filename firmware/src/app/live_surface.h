@@ -235,7 +235,7 @@ static void draw_live_surface(void)
             draw_live_mix(offset);
         } else if(live.mode==LIVE_EFFECTS) {
             live_text(164,43,72,&FONT_P20,live.roll_key>=0?(live.mix_kit?"808 SD":"909 SD"):
-                live.fx_view==LIVE_FX_GESTURES?"DRUM DJ":"GLOBAL",C_GRAY,offset);
+                "GLOBAL",C_GRAY,offset);
             draw_live_fx(offset);
         } else if(live.mode==LIVE_INSTRUMENT) {
             draw_live_device(offset);

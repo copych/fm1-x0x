@@ -545,3 +545,36 @@ Before hardware qualification, measure worst render/service cadence versus the
 roll/filter plus repeat/FX tails, tempo extremes, busy UI/MIDI/USB; measure peak
 stack, queue pressure, underruns and clipping, listen for mode/release clicks,
 and verify stop/clock loss, save/restore and recovery on the actual FM-1.
+
+## Unbuilt follow-up: revert separate drum-filter routing
+
+User requested reverting the drum/mix split after live11. Baseline source
+`7820ddc`; compiled application `6e841fd`. Source now restores the existing
+stereo master filter on the complete mix, after shared delay/reverb returns.
+The filter therefore affects drums, 303s and effect tails together. Removed the
+four-channel drum-filter state/loop and the unfiltered master wrapper; master.c
+and master.h match their pre-live11 implementation. Original drum/303/send
+mixing order is retained. No extra mix buffers are introduced.
+
+Per-event subchunk processing remains so momentary fronts stay beat-aligned.
+Snare roll scheduling, independent roll/filter operation, chopper attack/tail
+alignment and restore-order protection are retained. LIVE identifies FX as
+GLOBAL; README/performer/emulator help reflect master filtering. Existing screen
+captures still depict the published live11 build until refreshed after approval.
+The WASM routing regression now requires an audible filter change for isolated
+303s as well as isolated drums; it has been updated but not run.
+
+Changed paths: engine render call, snare helper's removed filter/reset state,
+master DSP wrapper/header, LIVE heading, routing assertions and documentation.
+Audio execution remains in the same render owner after worker retirement;
+filtering reuses the original master loop and prepared coefficients.
+
+Compliance: audio hot-path/numerics, ownership, dependencies/includes/licenses
+and unchanged storage/package contracts PASS for inspected source scope, with
+master DSP source restored exactly to the prior implementation. Target/build/ABI,
+new linker/stack totals, host functional validation, physical installation/recovery
+and hardware real-time validation remain UNVERIFIED for this revert. No build,
+tests, captures, flash or publication run. After approval, run master/stereo,
+native scenarios and all four WASM suites, checking full-mix routing, synced FX,
+roll combinations, stop/release and restoration. Served/public artifacts remain
+live11 with the previous drum-only routing until a new build is requested.
