@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Live11 performer interface · X0X</title>
-<meta name="description" content="Live11 performer interface for X0X, groovebox firmware for the M-VAVE FM-1.">
+<title>Live12 performer interface · X0X</title>
+<meta name="description" content="Live12 performer interface for X0X, groovebox firmware for the M-VAVE FM-1.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Barlow+Semi+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400&display=swap">
@@ -89,8 +89,8 @@ nav.contents li { break-inside: avoid; }
 <a class="skip" href="#content">Skip to content</a>
 <main id="content">
 <a class="home" href="../">X0X</a>
-<h1>Live11 performer interface</h1>
-<p>Live11 starts on LIVE: one performance surface with latched sections. Select a section, release its button, then use the knobs and musical keys. No pagination. All LIVE display text is at least 20 px: labels/status 20, heading 24, values 36. The detailed legacy editor keeps its original layout and fonts.</p>
+<h1>Live12 performer interface</h1>
+<p>Live12 starts on LIVE: one performance surface with latched sections. Select a section, release its button, then use the knobs and musical keys. No pagination. All LIVE display text is at least 20 px: labels/status 20, heading 24, values 36. The detailed legacy editor keeps its original layout and fonts.</p>
 <div class="figs"><figure class="shot"><img src="img/performer/live.png" alt="LIVE sound controls" loading="lazy"><figcaption>LIVE sound controls</figcaption></figure></div>
 <h2 id="start-playing">Start playing</h2>
 <ol><li>On 303 A, press OCT+ for a phrase, then PLAY.</li><li>Tap ARP to select Director. Tap ARP again to coordinate B and the drum kit.</li><li>First four black keys select 909, 808, 303 A and 303 B. Hold SEL to link parts.</li><li>Tap EDIT for the selected instrument, LFO for Mixer, FX for momentary effects, ENV for Automation, or ARP for Director. These selections latch.</li></ol>
@@ -126,7 +126,7 @@ nav.contents li { break-inside: avoid; }
 <div class="figs"><figure class="shot"><img src="img/performer/delay.png" alt="Delay controls" loading="lazy"><figcaption>Delay controls</figcaption></figure><figure class="shot"><img src="img/performer/reverb.png" alt="Reverb controls" loading="lazy"><figcaption>Reverb controls</figcaption></figure></div>
 <div class="table"><table><thead><tr><th>White key</th><th>Gesture</th></tr></thead><tbody><tr><td>1 / 2</td><td>Low-pass / high-pass DJ filter</td></tr><tr><td>3 / 4</td><td>Kick pump / drive</td></tr><tr><td>5 / 6</td><td>Tape stop / chopper</td></tr><tr><td>7 / 8 / 9</td><td>Captured audio repeat at 1/8 / 1/16 / 1/32</td></tr><tr><td>10 / 11 / 12</td><td>Snare roll at 1/8 / 1/16 / 1/32</td></tr></tbody></table></div>
 <p>Effect presses wait for the next 909 sixteenth-note event. WAIT indicates a pending effect; releasing before it starts cancels it. Chopper passes attacks and silences tails, relocking its open edge to each sixteenth. Release remains immediate with the existing short wet fade, rather than waiting for a grid line. Keep the normal 909 16-step/sixteenth clock running for these gestures.</p>
-<p>The DJ filter now affects both drum kits and their new delay/reverb sends. 303s and already sounding delay/reverb tails bypass it. Master compression, pump, drive, tape stop, chopper and repeats still affect the full mix.</p>
+<p>The DJ filter affects the full mix: both drum kits, both 303s and the delay/reverb returns. Compression, pump, drive, tape stop, chopper and repeats also remain on the full mix.</p>
 <p>One regular momentary effect and one snare roll can run together. Hold a roll key while turning K1 filter, or hold a low/high-pass key as well. Releasing one does not stop the other. Turning a knob releases the regular held effect; K1 takes over the audible filter position while the roll continues.</p>
 <p>Rolls use the last focused 909/808 kit's current snare sound. The heading names the kit while rolling. They temporarily audition the snare even if its pattern voice is muted, but a whole-kit mute silences them. Pattern notes and mute states are not changed. Normal sequenced snare hits are suppressed during the roll to avoid doubled hits. Release stops retriggering and lets the last snare decay. Roll fronts follow the grid (eighth rolls start on alternate sixteenths); 1/32 adds a hit midway through each actual step interval, including swing. Rolls currently require internal clock; stop or leaving FX cancels them.</p>
 <p>Repeats capture the real stereo sound after the master processing. Audio capture holds 16384 frames (about 371 ms at 44.1 kHz); very slow repeat lengths are capped to this available history. Capture preserves approximately +/-2 signal units; master output limiting still applies. Entry/release and loop seams are smoothed. Tape stop slows to zero over 400 ms, with a fade over its final 80 ms. Chopper repeats a complete open/closed cycle every sixteenth note while held.</p>
