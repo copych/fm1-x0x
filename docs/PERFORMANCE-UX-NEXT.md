@@ -578,3 +578,38 @@ tests, captures, flash or publication run. After approval, run master/stereo,
 native scenarios and all four WASM suites, checking full-mix routing, synced FX,
 roll combinations, stop/release and restoration. Served/public artifacts remain
 live11 with the previous drum-only routing until a new build is requested.
+
+## Live12 build and publication record — no tests run
+
+Application source: `e423bb7`. User requested build and GitHub publication,
+explicitly excluding tests. Built for FM-1 with the same matched JieLi toolchain
+and AC79 SDK using `tools/build-fm1-wsl.sh --release 1.2.1-live12`; emulator via
+`X0X_VERSION=1.2.1-live12 tools/build-emu-wsl.sh` (Emscripten 3.1.69).
+This build supersedes the unbuilt routing-revert status above.
+
+- App 445276 bytes.
+- Ordinary RAM 96464 / 98304 (1840 free), 48 bytes below live11.
+- Pool 331752 / 344064 (12312 free), 8192-byte reserve retained.
+- Package `build/x0x-1.2.1-live12.fwsc`, 609682 bytes, FM-1_9010201.
+- SHA-256 `0ae408a824285b57679847e7c280003c377b0fbad715c90cd3a0d770d7a39d36`.
+- Matching emulator 541196-byte WASM; optional page voice absent.
+- Retained automatic build checks: 909 call-free RAM-text instructions, no
+  soft-double routines, HAL-only register access, SDK/loader/package integrity.
+
+| Compliance category | Status and evidence |
+| --- | --- |
+| Target / build / ABI | PASS for compile/link/package scope, matched SDK/toolchain and retained integrity checks above. |
+| Audio hot path / numerics | PASS for inspected source scope — original master filter restored; separate drum filter removed, no new renderer math/allocations/I/O/waits. Hardware cost UNVERIFIED. |
+| Execution ownership / synchronization | PASS for inspected scope — existing render owner, worker retirement and queued gestures retained; sample-aligned subchunks retained for effect fronts. |
+| Memory / storage / I/O | PASS for static linker/buffer scope above, no new buffers or saved fields; peak stack/device contention UNVERIFIED. |
+| Dependencies / includes / licenses | PASS — unchanged dependencies/assets/notices; no new includes. |
+| Compatibility / package / recovery | PASS for unchanged persistent/loader contracts and build integrity checks; physical install/recovery UNVERIFIED. |
+| Host functional validation | UNVERIFIED for live12 — explicitly no test suites, browser exercise, listening or fresh captures run. Updated full-mix routing assertion remains unexecuted. Earlier live11 results are historical, not validation of this revert. |
+| Hardware real-time validation | UNVERIFIED — no device flashed, timed, listened to or soaked. |
+
+README and guide describe full-mix filtering. Existing live11 screen captures
+are reused and the README calls out the outdated DRUM DJ label. No screenshots
+were regenerated because doing so would execute the emulator. After separate
+approval run the master/stereo, native scenario and four WASM suites described
+above, then check the changed routing on hardware. Previous published firmware
+downloads are retained alongside the live12 installer and matching emulator.
